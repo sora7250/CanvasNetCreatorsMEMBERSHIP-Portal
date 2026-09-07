@@ -6,12 +6,21 @@
   <title>CanvasNetCreatorMEMBERSHIP - CNCM</title>
   <link rel="stylesheet" href="style.css">
   
+  <!-- Firebase SDK -->
   <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore-compat.js"></script>
+
+  <!-- 認証ガード: 未認証なら自動的にログインゲートウェイへ転送 -->
+  <script>
+    if (!localStorage.getItem('cncm_username') || !localStorage.getItem('cncm_custom_id')) {
+      window.location.href = 'login.html';
+    }
+  </script>
 </head>
 <body>
 
-  <!-- 独自ポップアップ (提案②) -->
+  <!-- 独自ポップアップ -->
   <div class="custom-modal-backdrop" id="customDialog">
     <div class="custom-dialog-card">
       <div class="dialog-icon" id="dialogIcon">ℹ️</div>
@@ -34,7 +43,7 @@
         <span class="user-rank-badge" id="headerRankBadge">🥉 Bronze</span>
       </div>
       <div class="header-center">
-        <span class="header-username" id="displayUsername">未認証クリエイター</span>
+        <span class="header-username" id="displayUsername">読み込み中...</span>
       </div>
       <div class="header-right">
         <button class="icon-action-btn" id="fullscreenToggleBtn" title="全画面切替">⛶ 全画面</button>
@@ -43,10 +52,10 @@
       </div>
     </header>
 
-    <!-- 緊急アナウンス -->
+    <!-- 緊急アナウンスバナー -->
     <div class="emergency-alert-banner" id="emergencyBanner" style="display: none;">
       <span class="alert-icon">🚨</span>
-      <span class="alert-text" id="emergencyBannerText">緊急告知：システム定刻監査が稼働中です。</span>
+      <span class="alert-text" id="emergencyBannerText"></span>
     </div>
 
     <!-- メインタブナビゲーション -->
@@ -55,14 +64,14 @@
     <!-- メインビュー領域 -->
     <main class="main-viewport">
       
-      <!-- 1. ポート・ラウンジ パネル (初期表示 active) -->
+      <!-- 1. ポート・ラウンジ パネル -->
       <section id="panel-lounge" class="app-panel active">
         <div class="sub-tab-bar">
           <button class="sub-tab-btn active" onclick="switchSubTab('panel-lounge', 'sub-port', this)">🟢 ポート (在席・ステータス)</button>
           <button class="sub-tab-btn" onclick="switchSubTab('panel-lounge', 'sub-lounge', this)">💬 ラウンジ (オープンチャット)</button>
         </div>
 
-        <!-- サブ：ポート (初期表示 active) -->
+        <!-- サブ：ポート -->
         <div id="sub-port" class="sub-panel active">
           <div class="panel-scroll-box">
             <div class="card">
@@ -81,7 +90,7 @@
                 </div>
                 <div class="form-group">
                   <label>作業内容・ひとこと</label>
-                  <input type="text" id="myTaskInput" class="form-control" placeholder="例：新曲のベースライン打ち込み、MVカラーグレーディング">
+                  <input type="text" id="myTaskInput" class="form-control" placeholder="例：新曲のトラック制作、動画編集、イラストラフ">
                 </div>
               </div>
               <button class="btn btn-primary" onclick="updateLoungeStatus()">ステータスを更新して在席</button>
@@ -93,7 +102,9 @@
                 <span class="sub-text">タップして話しかけ申請</span>
               </div>
               <div class="member-table-wrapper">
-                <div class="member-table-body" id="loungeMemberList"></div>
+                <div class="member-table-body" id="loungeMemberList">
+                  <div class="empty-state-notice">現在在席中のメンバーはいません</div>
+                </div>
               </div>
             </div>
           </div>
@@ -106,9 +117,11 @@
               <span class="chat-room-title">💬 ラウンジ全体チャット</span>
               <button class="btn btn-small btn-outline" onclick="markOpenChatAsRead()">すべて既読</button>
             </div>
-            <div class="chat-stream" id="openChatStream"></div>
+            <div class="chat-stream" id="openChatStream">
+              <div class="empty-state-notice">メッセージはまだありません</div>
+            </div>
             <div class="chat-input-bar">
-              <input type="text" id="openChatInput" class="form-control" placeholder="メッセージを入力（@ネームでメンション / 吹き出しダブルタップでいいね）" onkeydown="if(event.key==='Enter') sendOpenChatMessage()">
+              <input type="text" id="openChatInput" class="form-control" placeholder="メッセージを入力（@ネームでメンション / ダブルタップでスキ）" onkeydown="if(event.key==='Enter') sendOpenChatMessage()">
               <button class="btn btn-primary" onclick="sendOpenChatMessage()">送信</button>
             </div>
           </div>
@@ -127,7 +140,7 @@
 
         <div class="group-control-bar">
           <div class="search-box-row">
-            <input type="text" id="groupSearchInput" class="form-control" placeholder="🔍 グループ名・概要・タグでリアルタイム検索..." oninput="filterGroups()">
+            <input type="text" id="groupSearchInput" class="form-control" placeholder="🔍 グループ名・概要・タグで検索..." oninput="filterGroups()">
             <div class="view-switch-toggle">
               <button class="btn-toggle active" id="viewCardBtn" onclick="setGroupViewMode('card')" title="カード表示">🪟</button>
               <button class="btn-toggle" id="viewListBtn" onclick="setGroupViewMode('list')" title="リスト表示">📜</button>
@@ -148,19 +161,25 @@
 
         <div id="sub-group-my" class="sub-panel active">
           <div class="panel-scroll-box">
-            <div id="myGroupContainer" class="group-items-container view-card"></div>
+            <div id="myGroupContainer" class="group-items-container view-card">
+              <div class="empty-state-notice">参加しているグループはありません</div>
+            </div>
           </div>
         </div>
 
         <div id="sub-group-invites" class="sub-panel">
           <div class="panel-scroll-box">
-            <div id="invitedGroupContainer" class="group-items-container view-card"></div>
+            <div id="invitedGroupContainer" class="group-items-container view-card">
+              <div class="empty-state-notice">保留中の招待はありません</div>
+            </div>
           </div>
         </div>
 
         <div id="sub-group-explore" class="sub-panel">
           <div class="panel-scroll-box">
-            <div id="allGroupContainer" class="group-items-container view-card"></div>
+            <div id="allGroupContainer" class="group-items-container view-card">
+              <div class="empty-state-notice">公開されているグループはありません</div>
+            </div>
           </div>
         </div>
       </section>
@@ -179,11 +198,13 @@
               <span class="filter-badge" onclick="filterThreads('review', this)">🎨 ラフ見て</span>
               <span class="filter-badge" onclick="filterThreads('solved', this)">✅ 解決済</span>
             </div>
-            <div class="thread-list-scroll" id="threadListScroll"></div>
+            <div class="thread-list-scroll" id="threadListScroll">
+              <div class="empty-state-notice">スレッドはまだありません</div>
+            </div>
           </div>
 
           <div class="forum-main-content" id="threadDetailView">
-            <div class="empty-state-notice">左側のリストからスレッドを選択してください。</div>
+            <div class="empty-state-notice">左側のリストからスレッドを選択してください</div>
           </div>
         </div>
       </section>
@@ -199,7 +220,9 @@
 
         <div class="panel-scroll-box">
           <div id="eventTopicsView" class="event-view-section active">
-            <div class="topic-cards-grid" id="eventTopicsGrid"></div>
+            <div class="topic-cards-grid" id="eventTopicsGrid">
+              <div class="empty-state-notice">現在開催中のお題はありません</div>
+            </div>
           </div>
 
           <div id="eventGalleryView" class="event-view-section">
@@ -208,7 +231,9 @@
               <p id="galleryEventDesc" class="sub-text">概要</p>
               <button class="btn btn-primary" onclick="openModal('submitWorkModal')">📤 作品をエントリー</button>
             </div>
-            <div class="works-masonry-grid" id="worksGrid"></div>
+            <div class="works-masonry-grid" id="worksGrid">
+              <div class="empty-state-notice">提出作品はまだありません</div>
+            </div>
           </div>
         </div>
       </section>
@@ -275,7 +300,7 @@
       <section id="admin-audit" class="admin-panel active">
         <div class="admin-panel-header">
           <h2>リアルタイム自動巡回・通報キュー</h2>
-          <span class="badge badge-ok">● 自動監査エンジン正常稼働中</span>
+          <span class="badge badge-ok">● 自動監査エンジン稼働中</span>
         </div>
         <div class="admin-card">
           <div class="table-responsive">
@@ -284,12 +309,14 @@
                 <tr>
                   <th>検知時刻</th>
                   <th>対象ユーザー</th>
-                  <th>検知フラグ・理由</th>
+                  <th>検知フラグ</th>
                   <th>該当コンテンツ</th>
                   <th>操作</th>
                 </tr>
               </thead>
-              <tbody id="adminAuditTableBody"></tbody>
+              <tbody id="adminAuditTableBody">
+                <tr><td colspan="5" style="text-align: center; color: var(--text-sub);">現在検知されたフラグ・違反ログはありません</td></tr>
+              </tbody>
             </table>
           </div>
         </div>
@@ -301,14 +328,14 @@
         </div>
         <div class="admin-card">
           <div class="form-grid-2">
-            <input type="text" id="adminUserSearchQuery" class="form-control" placeholder="匿名ネームまたはIDを入力...">
+            <input type="text" id="adminUserSearchQuery" class="form-control" placeholder="固有ID（CNCM-XXXX）またはネームを入力...">
             <button class="btn btn-primary" onclick="searchUserForMod()">アカウント照会</button>
           </div>
           <div id="modUserResult" style="margin-top: 1rem; display: none;">
             <div class="mod-profile-box">
               <h4 id="modTargetName">対象者</h4>
               <p id="modTargetDetails" class="sub-text">ステータス</p>
-              <div class="mod-btn-group">
+              <div class="mod-btn-group" style="display: flex; gap: 0.5rem; margin-top: 0.8rem;">
                 <button class="btn btn-warning" onclick="applyPenalty('warn')">イエローカード (警告)</button>
                 <button class="btn btn-warning" onclick="applyPenalty('mute')">24時間発言ミュート</button>
                 <button class="btn btn-danger" onclick="applyPenalty('ban')">コミュニティ永久BAN (追放)</button>
@@ -349,24 +376,30 @@
         <button class="modal-close-btn" onclick="closeModal('profileModal')">✕</button>
       </div>
       <div class="modal-body">
-        <button class="btn btn-google" onclick="handleGoogleAuthClick()">🔴 Googleアカウントで認証</button>
-        
-        <div class="form-group" style="margin-top: 1rem;">
-          <label>匿名ハンドルネーム</label>
-          <input type="text" id="profileNameInput" class="form-control" placeholder="例：匿名クリエイター01" maxlength="15">
+        <div class="form-group">
+          <label>運営管理用 固有ID</label>
+          <input type="text" id="profileCustomIdDisplay" class="form-control" disabled style="opacity: 0.7;">
         </div>
 
         <div class="form-group">
-          <label>アバター絵文字 (提案⑥)</label>
+          <label>匿名ハンドルネーム</label>
+          <input type="text" id="profileNameInput" class="form-control" maxlength="15">
+        </div>
+
+        <div class="form-group">
+          <label>アバター絵文字</label>
           <div class="emoji-picker-grid" id="avatarEmojiGrid"></div>
         </div>
 
         <div class="form-group">
-          <label>または端末内画像をアップロード (提案⑦)</label>
+          <label>または端末内画像をアップロード</label>
           <input type="file" id="avatarFileInput" accept="image/*" class="form-control" onchange="handleImageUpload(event, 'userAvatar')">
         </div>
 
-        <button class="btn btn-primary" style="width: 100%;" onclick="saveUserProfile()">保存する</button>
+        <div style="display: flex; gap: 0.5rem; margin-top: 1rem;">
+          <button class="btn btn-primary" style="flex: 1;" onclick="saveUserProfile()">保存する</button>
+          <button class="btn btn-danger btn-small" onclick="handleLogout()">ログアウト</button>
+        </div>
       </div>
     </div>
   </div>
@@ -429,23 +462,23 @@
       </div>
       <div class="modal-body">
         <div class="form-group">
-          <label>グループ冠絵文字 (提案⑥)</label>
+          <label>グループ冠絵文字</label>
           <div class="emoji-picker-grid" id="groupCrownEmojiGrid"></div>
         </div>
 
         <div class="form-group">
-          <label>または端末内画像を冠アイコンに設定 (提案⑦)</label>
+          <label>または端末内画像を冠アイコンに設定</label>
           <input type="file" id="groupIconFileInput" accept="image/*" class="form-control" onchange="handleImageUpload(event, 'groupIcon')">
         </div>
 
         <div class="form-group">
           <label>グループ名</label>
-          <input type="text" id="newGroupName" class="form-control" placeholder="例：AfterEffectsモーショングラフィックス研究会">
+          <input type="text" id="newGroupName" class="form-control" placeholder="グループ名を入力">
         </div>
 
         <div class="form-group">
           <label>グループ概要</label>
-          <input type="text" id="newGroupDesc" class="form-control" placeholder="例：日常のループ映像やプリセットの共有・相談">
+          <input type="text" id="newGroupDesc" class="form-control" placeholder="活動内容や目的">
         </div>
 
         <div class="form-group">
@@ -481,24 +514,24 @@
           <label>相談カテゴリー</label>
           <select id="newThreadCategory" class="form-control">
             <option value="help">🙋‍♂️ 助けて (技術的詰まり・エラー)</option>
-            <option value="compare">👀 どっち？ (比較・どちらが良いか意見募集)</option>
+            <option value="compare">👀 どっち？ (比較・意見募集)</option>
             <option value="review">🎨 ラフ見て (作りかけの感想・壁打ち)</option>
           </select>
         </div>
 
         <div class="form-group">
           <label>タイトル</label>
-          <input type="text" id="newThreadTitle" class="form-control" placeholder="例：Premiereで特定エフェクト適用時のレンダリングエラーについて">
+          <input type="text" id="newThreadTitle" class="form-control" placeholder="相談の要点を簡潔に記述">
         </div>
 
         <div class="form-group">
           <label>相談内容・背景</label>
-          <textarea id="newThreadBody" class="form-control" rows="4" placeholder="具体的な状況、試したこと、質問したい要点を記述してください。"></textarea>
+          <textarea id="newThreadBody" class="form-control" rows="4" placeholder="具体的な状況、試したこと、質問したい内容を記述してください。"></textarea>
         </div>
 
         <div class="form-group">
-          <label>Google Drive メディア埋め込み (動画/画像/音源のプレビューURLまたはID)</label>
-          <input type="text" id="newThreadDriveUrl" class="form-control" placeholder="例：https://drive.google.com/file/d/1A2B3C.../view または ファイルID">
+          <label>Google Drive メディア埋め込み (プレビューURLまたはファイルID)</label>
+          <input type="text" id="newThreadDriveUrl" class="form-control" placeholder="https://drive.google.com/file/d/.../view">
           <span class="sub-text">※Google Drive上の共有設定を「リンクを知っている全員が閲覧可能」にしてください。</span>
         </div>
 
@@ -516,7 +549,7 @@
       <div class="modal-body">
         <div class="form-group">
           <label>お題タイトル</label>
-          <input type="text" id="newTopicTitle" class="form-control" placeholder="例：雨の音を使った15秒ループBGM制作">
+          <input type="text" id="newTopicTitle" class="form-control" placeholder="お題のタイトル">
         </div>
         <div class="form-group">
           <label>お題のレギュレーション・説明</label>
@@ -540,10 +573,10 @@
       <div class="modal-body">
         <div class="form-group">
           <label>作品タイトル</label>
-          <input type="text" id="submitWorkTitle" class="form-control" placeholder="例：Midnight Rain Loop #01">
+          <input type="text" id="submitWorkTitle" class="form-control" placeholder="作品のタイトル">
         </div>
         <div class="form-group">
-          <label>作品のGoogle DriveプレビューURL (動画/画像/音源)</label>
+          <label>作品のGoogle DriveプレビューURL</label>
           <input type="text" id="submitWorkDriveUrl" class="form-control" placeholder="https://drive.google.com/file/d/.../view">
         </div>
         <div class="form-group">
