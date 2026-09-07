@@ -4,1695 +4,612 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
   <title>CanvasNetCreatorMEMBERSHIP - CNCM</title>
-
+  <link rel="stylesheet" href="style.css">
+  
   <!-- Firebase SDK (Google認証用) -->
   <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-auth-compat.js"></script>
-
-  <style>
-    :root {
-      --bg-main: #12141a;
-      --bg-card: #1c202a;
-      --bg-sub: #161922;
-      --border: #2a3142;
-      --accent: #6366f1;
-      --text: #f3f4f6;
-      --text-sub: #9ca3af;
-      --status-ok: #22c55e;
-      --status-busy: #ef4444;
-      --status-work: #f59e0b;
-      --status-rest: #3b82f6;
-      --font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-    }
-
-    * {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
-      font-family: var(--font-family);
-      -webkit-tap-highlight-color: transparent;
-    }
-
-    /* アプリ全体をビューポートいっぱいに固定（全体スクロールを抑止） */
-    html, body {
-      width: 100%;
-      height: 100%;
-      height: 100dvh;
-      overflow: hidden;
-      background-color: var(--bg-main);
-      color: var(--text);
-      display: flex;
-      flex-direction: column;
-    }
-
-    /* ヘッダー（固定） */
-    header {
-      background-color: var(--bg-card);
-      border-bottom: 1px solid var(--border);
-      padding: 0.6rem 1rem;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      flex-shrink: 0;
-      z-index: 50;
-    }
-
-    .logo {
-      font-weight: bold;
-      font-size: 0.95rem;
-      letter-spacing: 0.5px;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-    }
-
-    .header-actions {
-      display: flex;
-      align-items: center;
-      gap: 0.5rem;
-      flex-shrink: 0;
-    }
-
-    .avatar-icon {
-      width: 32px;
-      height: 32px;
-      border-radius: 50%;
-      background: var(--border);
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 1.1rem;
-      overflow: hidden;
-      border: 1px solid var(--border);
-    }
-
-    .icon-btn {
-      background: none;
-      border: 1px solid var(--border);
-      color: var(--text);
-      padding: 0.35rem 0.65rem;
-      border-radius: 6px;
-      cursor: pointer;
-      font-size: 0.8rem;
-      white-space: nowrap;
-      transition: background-color 0.15s ease;
-    }
-
-    .icon-btn:hover {
-      background-color: var(--border);
-    }
-
-    /* メインタブ（固定） */
-    nav.main-nav {
-      display: flex;
-      gap: 0.4rem;
-      padding: 0.5rem 1rem;
-      background-color: var(--bg-sub);
-      border-bottom: 1px solid var(--border);
-      overflow-x: auto;
-      flex-shrink: 0;
-      scrollbar-width: none;
-    }
-    nav.main-nav::-webkit-scrollbar {
-      display: none;
-    }
-
-    .tab-btn {
-      background: none;
-      border: 1px solid transparent;
-      color: var(--text-sub);
-      padding: 0.4rem 0.8rem;
-      border-radius: 6px;
-      cursor: pointer;
-      font-weight: 500;
-      white-space: nowrap;
-      font-size: 0.85rem;
-      transition: all 0.15s ease;
-    }
-
-    .tab-btn:hover {
-      color: var(--text);
-      background-color: var(--border);
-    }
-
-    .tab-btn.active {
-      color: #fff;
-      background-color: var(--accent);
-    }
-
-    /* サブタブ（固定） */
-    .sub-nav {
-      display: flex;
-      gap: 0.4rem;
-      padding: 0.4rem 1rem;
-      background-color: rgba(0, 0, 0, 0.2);
-      border-bottom: 1px solid var(--border);
-      overflow-x: auto;
-      flex-shrink: 0;
-      scrollbar-width: none;
-    }
-    .sub-nav::-webkit-scrollbar {
-      display: none;
-    }
-
-    .sub-tab-btn {
-      background: none;
-      border: 1px solid var(--border);
-      color: var(--text-sub);
-      padding: 0.3rem 0.7rem;
-      border-radius: 20px;
-      cursor: pointer;
-      font-size: 0.78rem;
-      white-space: nowrap;
-      display: flex;
-      align-items: center;
-      gap: 0.3rem;
-      transition: all 0.15s ease;
-    }
-
-    .sub-tab-btn.active {
-      background-color: var(--border);
-      color: var(--text);
-      border-color: var(--accent);
-      font-weight: bold;
-    }
-
-    .badge-count {
-      background-color: #ef4444;
-      color: #fff;
-      font-size: 0.65rem;
-      padding: 0.1rem 0.35rem;
-      border-radius: 10px;
-      font-weight: bold;
-    }
-
-    /* メインコンテンツ枠（ここだけが画面の高さを埋め、パネルが内部スクロールする） */
-    main {
-      flex: 1;
-      width: 100%;
-      height: 100%;
-      overflow: hidden;
-      position: relative;
-    }
-
-    .panel {
-      display: none;
-      width: 100%;
-      height: 100%;
-      overflow: hidden;
-      flex-direction: column;
-    }
-
-    .panel.active {
-      display: flex;
-    }
-
-    .sub-panel {
-      display: none;
-      width: 100%;
-      height: 100%;
-      overflow: hidden;
-      flex-direction: column;
-    }
-
-    .sub-panel.active {
-      display: flex;
-    }
-
-    /* 内部スクロール用コンテナ */
-    .scroll-container {
-      flex: 1;
-      overflow-y: auto;
-      padding: 1rem;
-      -webkit-overflow-scrolling: touch;
-    }
-
-    /* カード・コンテナ */
-    .card {
-      background-color: var(--bg-card);
-      border: 1px solid var(--border);
-      border-radius: 8px;
-      padding: 1rem;
-      margin-bottom: 1rem;
-    }
-
-    .card-title {
-      font-size: 0.95rem;
-      margin-bottom: 0.6rem;
-      font-weight: bold;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-    }
-
-    /* メンバー一覧スクロールテーブル枠 */
-    .member-table-wrapper {
-      background-color: var(--bg-main);
-      border: 1px solid var(--border);
-      border-radius: 6px;
-      overflow: hidden;
-      display: flex;
-      flex-direction: column;
-      max-height: 480px;
-    }
-
-    .member-table-scroll {
-      flex: 1;
-      overflow-y: auto;
-    }
-
-    .member-row {
-      display: flex;
-      align-items: center;
-      gap: 0.8rem;
-      padding: 0.65rem 0.8rem;
-      border-bottom: 1px solid var(--border);
-      cursor: pointer;
-      transition: background-color 0.15s ease;
-      position: relative;
-    }
-
-    .member-row:hover {
-      background-color: rgba(99, 102, 241, 0.08);
-    }
-
-    .member-row:last-child {
-      border-bottom: none;
-    }
-
-    .status-dot {
-      width: 10px;
-      height: 10px;
-      border-radius: 50%;
-      position: absolute;
-      bottom: 6px;
-      left: 28px;
-      border: 2px solid var(--bg-main);
-    }
-
-    .dot-ok { background-color: var(--status-ok); }
-    .dot-busy { background-color: var(--status-busy); }
-    .dot-work { background-color: var(--status-work); }
-    .dot-rest { background-color: var(--status-rest); }
-
-    .tag-busy { color: var(--status-busy); font-weight: bold; }
-    .tag-ok { color: var(--status-ok); font-weight: bold; }
-
-    /* チャットUI（最下部固定入力バー型） */
-    .chat-view-container {
-      display: flex;
-      flex-direction: column;
-      height: 100%;
-      width: 100%;
-      overflow: hidden;
-    }
-
-    .chat-messages-area {
-      flex: 1;
-      overflow-y: auto;
-      padding: 1rem;
-      display: flex;
-      flex-direction: column;
-      gap: 0.6rem;
-      -webkit-overflow-scrolling: touch;
-    }
-
-    .chat-input-bar {
-      padding: 0.6rem 1rem;
-      background-color: var(--bg-card);
-      border-top: 1px solid var(--border);
-      display: flex;
-      gap: 0.5rem;
-      flex-shrink: 0;
-      align-items: center;
-    }
-
-    .unread-separator {
-      display: flex;
-      align-items: center;
-      text-align: center;
-      margin: 0.6rem 0;
-      color: #ef4444;
-      font-size: 0.72rem;
-      font-weight: bold;
-    }
-
-    .unread-separator::before, .unread-separator::after {
-      content: '';
-      flex: 1;
-      border-bottom: 1px dashed #ef4444;
-    }
-    .unread-separator::before { margin-right: 0.5em; }
-    .unread-separator::after { margin-left: 0.5em; }
-
-    .chat-bubble {
-      max-width: 82%;
-      padding: 0.5rem 0.75rem;
-      border-radius: 8px;
-      font-size: 0.82rem;
-      line-height: 1.4;
-      word-break: break-word;
-    }
-
-    .chat-bubble.mine {
-      align-self: flex-end;
-      background-color: var(--accent);
-      color: #fff;
-    }
-
-    .chat-bubble.other {
-      align-self: flex-start;
-      background-color: var(--bg-card);
-      border: 1px solid var(--border);
-      color: var(--text);
-    }
-
-    .chat-bubble.mentioned {
-      border: 1.5px solid #f59e0b !important;
-      background-color: rgba(245, 158, 11, 0.12) !important;
-    }
-
-    .chat-bubble.system-alert {
-      align-self: center;
-      background-color: rgba(239, 68, 68, 0.15);
-      border: 1px solid #ef4444;
-      color: #fca5a5;
-      font-size: 0.72rem;
-      text-align: center;
-      width: 100%;
-    }
-
-    .chat-author {
-      font-size: 0.7rem;
-      color: var(--text-sub);
-      margin-bottom: 0.2rem;
-      display: flex;
-      align-items: center;
-      gap: 0.3rem;
-    }
-
-    /* グループ・フィルターUI */
-    .filter-section {
-      display: flex;
-      flex-direction: column;
-      gap: 0.5rem;
-      margin-bottom: 0.8rem;
-      flex-shrink: 0;
-    }
-
-    .tag-filter-chips {
-      display: flex;
-      gap: 0.35rem;
-      overflow-x: auto;
-      scrollbar-width: none;
-      padding-bottom: 0.2rem;
-    }
-    .tag-filter-chips::-webkit-scrollbar {
-      display: none;
-    }
-
-    .filter-chip {
-      background: var(--bg-main);
-      border: 1px solid var(--border);
-      color: var(--text-sub);
-      padding: 0.25rem 0.6rem;
-      border-radius: 12px;
-      font-size: 0.72rem;
-      cursor: pointer;
-      white-space: nowrap;
-    }
-
-    .filter-chip.active {
-      background: var(--accent);
-      color: #fff;
-      border-color: var(--accent);
-    }
-
-    .group-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-      gap: 0.8rem;
-    }
-
-    .group-card {
-      background-color: var(--bg-card);
-      border: 1px solid var(--border);
-      border-radius: 8px;
-      padding: 0.9rem;
-      display: flex;
-      flex-direction: column;
-      gap: 0.5rem;
-    }
-
-    .group-tags {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 0.3rem;
-      margin-top: 0.3rem;
-    }
-
-    .group-tag-pill {
-      font-size: 0.68rem;
-      background: rgba(99, 102, 241, 0.15);
-      color: var(--accent);
-      padding: 0.15rem 0.4rem;
-      border-radius: 4px;
-    }
-
-    .leader-badge {
-      background: #f59e0b;
-      color: #000;
-      font-size: 0.65rem;
-      padding: 0.15rem 0.35rem;
-      border-radius: 4px;
-      font-weight: bold;
-    }
-
-    /* フォームパーツ */
-    input[type="text"], input[type="password"], select {
-      width: 100%;
-      background: var(--bg-main);
-      border: 1px solid var(--border);
-      padding: 0.55rem 0.75rem;
-      border-radius: 6px;
-      color: var(--text);
-      outline: none;
-      font-size: 0.85rem;
-    }
-
-    button.primary-btn {
-      background-color: var(--accent);
-      color: #fff;
-      border: none;
-      padding: 0.55rem 1rem;
-      border-radius: 6px;
-      cursor: pointer;
-      font-weight: bold;
-      font-size: 0.85rem;
-      white-space: nowrap;
-      transition: opacity 0.15s ease;
-    }
-
-    button.primary-btn:hover {
-      opacity: 0.9;
-    }
-
-    /* モーダル群 */
-    .modal-overlay {
-      position: fixed;
-      inset: 0;
-      background: rgba(0, 0, 0, 0.75);
-      display: none;
-      align-items: center;
-      justify-content: center;
-      z-index: 100;
-      padding: 1rem;
-    }
-
-    .modal {
-      background: var(--bg-card);
-      border: 1px solid var(--border);
-      border-radius: 10px;
-      padding: 1.5rem;
-      width: 100%;
-      max-width: 480px;
-      max-height: 90vh;
-      overflow-y: auto;
-      -webkit-overflow-scrolling: touch;
-    }
-
-    .icon-selector {
-      display: flex;
-      gap: 0.4rem;
-      overflow-x: auto;
-      padding: 0.4rem 0;
-      scrollbar-width: none;
-    }
-
-    .icon-opt {
-      font-size: 1.4rem;
-      padding: 0.3rem 0.5rem;
-      border: 2px solid transparent;
-      border-radius: 8px;
-      cursor: pointer;
-      background: var(--bg-main);
-      flex-shrink: 0;
-    }
-
-    .icon-opt.selected {
-      border-color: var(--accent);
-    }
-
-    .tag-choice-box {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 0.4rem;
-      margin: 0.4rem 0 0.8rem;
-    }
-
-    .tag-choice-item {
-      font-size: 0.75rem;
-      background: var(--bg-main);
-      border: 1px solid var(--border);
-      padding: 0.25rem 0.6rem;
-      border-radius: 6px;
-      cursor: pointer;
-    }
-
-    .tag-choice-item.selected {
-      background: var(--accent);
-      color: #fff;
-      border-color: var(--accent);
-    }
-
-    /* 設定用タブ順序 */
-    .tab-order-list {
-      display: flex;
-      flex-direction: column;
-      gap: 0.4rem;
-    }
-
-    .tab-order-item {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      padding: 0.4rem 0.75rem;
-      background-color: var(--bg-main);
-      border: 1px solid var(--border);
-      border-radius: 4px;
-      font-size: 0.8rem;
-    }
-
-    .order-btns button {
-      background: none;
-      border: none;
-      color: var(--text);
-      cursor: pointer;
-      padding: 0 0.3rem;
-      font-size: 0.85rem;
-    }
-
-    .admin-modal {
-      border: 2px solid #ef4444 !important;
-    }
-  </style>
 </head>
 <body>
 
-  <!-- 1. Google認証 & 匿名プロフィール設定モーダル -->
-  <div class="modal-overlay" id="loginModal">
-    <div class="modal" style="text-align: center;">
-      <h2 style="margin-bottom: 0.4rem; font-size: 1.2rem;">CNCM 認証</h2>
-      <p style="color: var(--text-sub); font-size: 0.8rem; margin-bottom: 1rem;">
-        安全のためGoogleアカウントで認証します。<br>※本名やメールアドレスは一切公開されません。
-      </p>
-
-      <button class="primary-btn" style="width: 100%; margin-bottom: 1.2rem; background: #ea4335;" onclick="mockGoogleAuth()">
-        🔴 Googleアカウントで認証する
-      </button>
-
-      <div id="profileSetupArea" style="display: none; text-align: left; border-top: 1px solid var(--border); padding-top: 1rem;">
-        <label style="font-size: 0.8rem; color: var(--text-sub); font-weight: bold;">匿名ハンドルネーム</label>
-        <input type="text" id="nameInput" placeholder="例：匿名クリエイター01" maxlength="15" style="margin-top: 0.3rem; margin-bottom: 0.8rem;">
-
-        <label style="font-size: 0.8rem; color: var(--text-sub); font-weight: bold;">アバターを選択</label>
-        <div class="icon-selector" style="margin-bottom: 1rem;">
-          <div class="icon-opt selected" onclick="pickAvatar('🎨', this)">🎨</div>
-          <div class="icon-opt" onclick="pickAvatar('🎧', this)">🎧</div>
-          <div class="icon-opt" onclick="pickAvatar('🎬', this)">🎬</div>
-          <div class="icon-opt" onclick="pickAvatar('💻', this)">💻</div>
-          <div class="icon-opt" onclick="pickAvatar('🖋️', this)">🖋️</div>
-        </div>
-
-        <button class="primary-btn" style="width: 100%;" onclick="completeRegistration()">コミュニティへ入場</button>
+  <!-- ================= 独自デザイン通知・確認ダイアログ (提案②) ================= -->
+  <div class="custom-modal-backdrop" id="customDialog">
+    <div class="custom-dialog-card">
+      <div class="dialog-icon" id="dialogIcon">ℹ️</div>
+      <h4 class="dialog-title" id="dialogTitle">通知</h4>
+      <p class="dialog-message" id="dialogMessage">メッセージ内容</p>
+      <div class="dialog-actions" id="dialogActions">
+        <button class="btn btn-primary" id="dialogConfirmBtn">OK</button>
+        <button class="btn btn-secondary" id="dialogCancelBtn" style="display: none;">キャンセル</button>
       </div>
     </div>
   </div>
 
-  <!-- 2. 環境設定カスタマイズモーダル（完全保持） -->
-  <div class="modal-overlay" id="settingsModal">
-    <div class="modal">
-      <h3 style="margin-bottom: 1rem; font-size: 1.05rem;">🎨 ワークスペース設定</h3>
-
-      <div style="margin-bottom: 1rem;">
-        <label style="font-size: 0.8rem; color: var(--text-sub); font-weight: bold; display: block; margin-bottom: 0.3rem;">カラーテーマ</label>
-        <select id="themeSelect" onchange="applyThemePreset(this.value)">
-          <option value="dark">ダークモード (標準)</option>
-          <option value="light">ライトモード</option>
-          <option value="midnight">ミッドナイトネイビー</option>
-          <option value="terminal">レトロターミナル (黒×緑)</option>
-        </select>
+  <!-- ================= 一般クリエイター空間（通常画面） ================= -->
+  <div id="userAppContainer" class="app-root-view">
+    
+    <!-- ヘッダー -->
+    <header class="app-header">
+      <div class="header-left">
+        <span class="brand-logo">CNCM</span>
+        <span class="user-rank-badge" id="headerRankBadge">🥉 Bronze</span>
       </div>
-
-      <div style="margin-bottom: 1rem;">
-        <label style="font-size: 0.8rem; color: var(--text-sub); font-weight: bold; display: block; margin-bottom: 0.3rem;">アクセントカラー</label>
-        <div style="display: flex; gap: 0.5rem;">
-          <div style="width:26px;height:26px;border-radius:50%;background:#6366f1;cursor:pointer;" onclick="setAccent('#6366f1')"></div>
-          <div style="width:26px;height:26px;border-radius:50%;background:#06b6d4;cursor:pointer;" onclick="setAccent('#06b6d4')"></div>
-          <div style="width:26px;height:26px;border-radius:50%;background:#10b981;cursor:pointer;" onclick="setAccent('#10b981')"></div>
-          <div style="width:26px;height:26px;border-radius:50%;background:#f43f5e;cursor:pointer;" onclick="setAccent('#f43f5e')"></div>
-          <div style="width:26px;height:26px;border-radius:50%;background:#f59e0b;cursor:pointer;" onclick="setAccent('#f59e0b')"></div>
-        </div>
+      <div class="header-center">
+        <span class="header-username" id="displayUsername">未認証クリエイター</span>
       </div>
-
-      <div style="margin-bottom: 1rem;">
-        <label style="font-size: 0.8rem; color: var(--text-sub); font-weight: bold; display: block; margin-bottom: 0.3rem;">フォントスタイル</label>
-        <select id="fontSelect" onchange="setFont(this.value)">
-          <option value="sans-serif">ゴシック系・モダン (標準)</option>
-          <option value="serif">明朝系・クラシック</option>
-          <option value="monospace">等幅・コーディング風</option>
-        </select>
+      <div class="header-right">
+        <!-- 全画面制御 (提案③) -->
+        <button class="icon-action-btn" id="fullscreenToggleBtn" title="全画面切替">⛶ 全画面</button>
+        <button class="icon-action-btn" onclick="openModal('settingsModal')">⚙️ 設定</button>
+        <div class="header-avatar" id="headerAvatar" onclick="openModal('profileModal')">🎨</div>
       </div>
+    </header>
 
-      <div style="margin-bottom: 1rem;">
-        <label style="font-size: 0.8rem; color: var(--text-sub); font-weight: bold; display: block; margin-bottom: 0.3rem;">メインタブの並び順</label>
-        <div class="tab-order-list" id="tabOrderList"></div>
-      </div>
-
-      <div style="display: flex; gap: 0.5rem; margin-top: 1.2rem;">
-        <button class="primary-btn" style="flex: 1;" onclick="closeModal('settingsModal')">設定を保存</button>
-        <button class="icon-btn" onclick="resetSettings()">初期化</button>
-      </div>
+    <!-- 緊急アナウンスバナー（管理者から発令時に表示） -->
+    <div class="emergency-alert-banner" id="emergencyBanner" style="display: none;">
+      <span class="alert-icon">🚨</span>
+      <span class="alert-text" id="emergencyBannerText">緊急告知：システム定刻監査が稼働中です。</span>
     </div>
-  </div>
 
-  <!-- 3. 話しかけ確認モーダル（1対1） -->
-  <div class="modal-overlay" id="talkConfirmModal">
-    <div class="modal" style="text-align: center;">
-      <div id="targetAvatarDisplay" style="font-size: 2.5rem; margin-bottom: 0.4rem;">🎨</div>
-      <h3 id="targetNameDisplay" style="margin-bottom: 0.3rem; font-size: 1.05rem;">クリエイター名</h3>
-      <p id="targetStatusDisplay" style="font-size: 0.8rem; color: var(--text-sub); margin-bottom: 1rem;">作業中</p>
+    <!-- メインナビゲーションタブ (動的レンダリング対応) -->
+    <nav class="main-tab-bar" id="mainTabBar"></nav>
 
-      <div id="busyWarning" style="display: none; background: rgba(239, 68, 68, 0.15); border: 1px solid #ef4444; color: #fca5a5; padding: 0.5rem; border-radius: 6px; font-size: 0.75rem; margin-bottom: 0.8rem;">
-        ⚠️ 現在「一人にしてください」モードです。
-      </div>
-
-      <div style="display: flex; gap: 0.5rem;">
-        <button class="primary-btn" id="sendTalkBtn" style="flex: 1;" onclick="requestTalk()">話しかける</button>
-        <button class="icon-btn" style="flex: 1;" onclick="closeModal('talkConfirmModal')">また後で</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- 4. 1対1 完全秘匿チャット画面 -->
-  <div class="modal-overlay" id="privateChatModal">
-    <div class="modal" style="max-width: 520px; height: 500px; display: flex; flex-direction: column; padding: 1rem;">
-      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem; flex-shrink: 0;">
-        <div style="display: flex; align-items: center; gap: 0.4rem;">
-          <span id="chatWithAvatar" style="font-size: 1.1rem;">🎨</span>
-          <strong id="chatWithName" style="font-size: 0.95rem;">相手のネーム</strong>
-        </div>
-        <button class="icon-btn" onclick="closeModal('privateChatModal')">退出</button>
-      </div>
+    <!-- メインビュー領域 (内部スクロール分離) -->
+    <main class="main-viewport">
       
-      <div class="chat-messages-area" id="privateChatBox" style="background: var(--bg-main); border: 1px solid var(--border); border-radius: 6px;">
-        <div class="chat-bubble system-alert">
-          🛡️ 完全秘匿チャットです。禁止ワード（個人情報・詮索）はシステムで強制検閲されます。
+      <!-- 1. ポート・ラウンジ パネル -->
+      <section id="panel-lounge" class="app-panel">
+        <div class="sub-tab-bar">
+          <button class="sub-tab-btn active" onclick="switchSubTab('panel-lounge', 'sub-port', this)">🟢 ポート (在席・ステータス)</button>
+          <button class="sub-tab-btn" onclick="switchSubTab('panel-lounge', 'sub-lounge', this)">💬 ラウンジ (オープンチャット)</button>
         </div>
-      </div>
 
-      <div style="display: flex; gap: 0.4rem; margin-top: 0.6rem; flex-shrink: 0;">
-        <input type="text" id="privateChatInput" placeholder="メッセージを入力..." onkeydown="if(event.key==='Enter') sendPrivateChatMessage()">
-        <button class="primary-btn" onclick="sendPrivateChatMessage()">送信</button>
-      </div>
-    </div>
-  </div>
+        <!-- サブ：ポート -->
+        <div id="sub-port" class="sub-panel active">
+          <div class="panel-scroll-box">
+            <div class="card">
+              <div class="card-header">
+                <h3>自習室チェックイン・ステータス設定</h3>
+              </div>
+              <div class="form-grid-2">
+                <div class="form-group">
+                  <label>現在の制作モード</label>
+                  <select id="myStatusMode" class="form-control">
+                    <option value="ok">🟢 話しかけOK</option>
+                    <option value="busy">🔴 一人にしてください (全集中)</option>
+                    <option value="work">🟡 作業中 (急ぎ以外NG)</option>
+                    <option value="rest">☕ 休憩中 (息抜き)</option>
+                  </select>
+                </div>
+                <div class="form-group">
+                  <label>作業内容・ひとこと</label>
+                  <input type="text" id="myTaskInput" class="form-control" placeholder="例：新曲のベースライン打ち込み、MVカラーグレーディング">
+                </div>
+              </div>
+              <button class="btn btn-primary" onclick="updateLoungeStatus()">ステータスを更新して在席</button>
+            </div>
 
-  <!-- 5. グループ作成モーダル（冠アイコン ＆ ハッシュタグ拡張版） -->
-  <div class="modal-overlay" id="newGroupModal">
-    <div class="modal">
-      <h3 style="margin-bottom: 0.8rem; font-size: 1.05rem;">👥 新規グループを作成</h3>
-
-      <label style="font-size: 0.8rem; color: var(--text-sub); font-weight: bold;">グループ冠アイコン</label>
-      <div class="icon-selector" id="groupIconSelector" style="margin: 0.3rem 0 0.8rem;">
-        <div class="icon-opt selected" onclick="pickGroupIcon('🎬', this)">🎬</div>
-        <div class="icon-opt" onclick="pickGroupIcon('💻', this)">💻</div>
-        <div class="icon-opt" onclick="pickGroupIcon('🎨', this)">🎨</div>
-        <div class="icon-opt" onclick="pickGroupIcon('🎧', this)">🎧</div>
-        <div class="icon-opt" onclick="pickGroupIcon('☕', this)">☕</div>
-        <div class="icon-opt" onclick="pickGroupIcon('🚀', this)">🚀</div>
-        <div class="icon-opt" onclick="pickGroupIcon('🎮', this)">🎮</div>
-      </div>
-
-      <label style="font-size: 0.8rem; color: var(--text-sub); font-weight: bold;">グループ名</label>
-      <input type="text" id="groupNameInput" placeholder="例：深夜のDTMトラック制作ギルド" style="margin-top: 0.3rem; margin-bottom: 0.8rem;">
-
-      <label style="font-size: 0.8rem; color: var(--text-sub); font-weight: bold;">グループ概要</label>
-      <input type="text" id="groupDescInput" placeholder="例：新曲コンピレーションのための音源制作" style="margin-top: 0.3rem; margin-bottom: 0.8rem;">
-
-      <label style="font-size: 0.8rem; color: var(--text-sub); font-weight: bold;">ハッシュタグ選択</label>
-      <div class="tag-choice-box" id="tagChoiceBox">
-        <div class="tag-choice-item" onclick="toggleTagChoice(this, '映像')">#映像</div>
-        <div class="tag-choice-item" onclick="toggleTagChoice(this, 'コード')">#コード</div>
-        <div class="tag-choice-item" onclick="toggleTagChoice(this, '描画')">#描画</div>
-        <div class="tag-choice-item" onclick="toggleTagChoice(this, '雑談')">#雑談</div>
-      </div>
-
-      <label style="font-size: 0.8rem; color: var(--text-sub); font-weight: bold;">カスタムタグ（自由入力）</label>
-      <input type="text" id="groupCustomTagInput" placeholder="例：AfterEffects, Blender（カンマ区切り）" style="margin-top: 0.3rem; margin-bottom: 1rem;">
-
-      <div style="display: flex; gap: 0.5rem;">
-        <button class="primary-btn" style="flex: 1;" onclick="createGroup()">作成してリーダーに就任</button>
-        <button class="icon-btn" onclick="closeModal('newGroupModal')">キャンセル</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- 6. グループチャット＆管理モーダル -->
-  <div class="modal-overlay" id="groupChatModal">
-    <div class="modal" style="max-width: 650px; height: 520px; display: flex; flex-direction: column; padding: 1rem;">
-      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem; flex-shrink: 0;">
-        <div style="display: flex; align-items: center; gap: 0.4rem;">
-          <span id="activeGroupIcon" style="font-size: 1.2rem;">👥</span>
-          <h3 id="activeGroupName" style="font-size: 1rem; display: inline;">グループ名</h3>
-          <span id="activeGroupRoleBadge"></span>
+            <div class="card no-margin-bottom">
+              <div class="card-header">
+                <h3>在席クリエイター一覧</h3>
+                <span class="sub-text">タップして話しかけ申請</span>
+              </div>
+              <div class="member-table-wrapper">
+                <div class="member-table-body" id="loungeMemberList"></div>
+              </div>
+            </div>
+          </div>
         </div>
-        <button class="icon-btn" onclick="closeModal('groupChatModal')">閉じる</button>
-      </div>
 
-      <!-- Google Drive連携プレースホルダー -->
-      <div style="background: var(--bg-main); border: 1px dashed var(--border); padding: 0.4rem 0.6rem; border-radius: 6px; font-size: 0.75rem; margin-bottom: 0.5rem; display: flex; justify-content: space-between; align-items: center; flex-shrink: 0;">
-        <span>📁 共有Drive: <strong id="driveFolderName">CNCM_Group_Folder</strong></span>
-        <button class="icon-btn" style="padding: 0.15rem 0.45rem; font-size: 0.7rem;" onclick="openDriveMock()">Driveを開く</button>
-      </div>
-
-      <!-- リーダー専用メニュー -->
-      <div id="leaderControlPanel" style="display: none; background: rgba(99, 102, 241, 0.1); border: 1px solid var(--accent); padding: 0.6rem; border-radius: 6px; margin-bottom: 0.5rem; font-size: 0.8rem; flex-shrink: 0;">
-        <strong style="color: var(--accent);">👑 リーダー専用メニュー</strong>
-        <div style="display: flex; gap: 0.4rem; margin-top: 0.4rem;">
-          <input type="text" id="inviteUserField" placeholder="招待するメンバー名" style="padding: 0.35rem 0.5rem; font-size: 0.75rem;">
-          <button class="primary-btn" style="padding: 0.35rem 0.7rem; font-size: 0.75rem;" onclick="sendGroupInviteFromLeader()">招待送信</button>
+        <!-- サブ：ラウンジ (オープンチャット) -->
+        <div id="sub-lounge" class="sub-panel">
+          <div class="chat-viewport">
+            <div class="chat-top-bar">
+              <span class="chat-room-title">💬 ラウンジ全体チャット</span>
+              <button class="btn btn-small btn-outline" onclick="markOpenChatAsRead()">すべて既読</button>
+            </div>
+            <div class="chat-stream" id="openChatStream"></div>
+            <div class="chat-input-bar">
+              <input type="text" id="openChatInput" class="form-control" placeholder="メッセージを入力（@ネームでメンション / 吹き出しダブルタップでいいね）" onkeydown="if(event.key==='Enter') sendOpenChatMessage()">
+              <button class="btn btn-primary" onclick="sendOpenChatMessage()">送信</button>
+            </div>
+          </div>
         </div>
-        <div style="margin-top: 0.4rem; display: flex; gap: 0.4rem;">
-          <button class="icon-btn" style="font-size: 0.7rem; color: #f59e0b;" onclick="transferLeaderRole()">リーダー権限を譲渡</button>
-          <button class="icon-btn" style="font-size: 0.7rem; color: #ef4444;" onclick="kickMemberPrompt()">メンバー追放</button>
+      </section>
+
+      <!-- 2. グループ パネル (提案④・⑤・⑥・⑦対応) -->
+      <section id="panel-groups" class="app-panel">
+        <div class="sub-tab-bar">
+          <button class="sub-tab-btn active" onclick="switchSubTab('panel-groups', 'sub-group-my', this)">参加中・マイグループ</button>
+          <button class="sub-tab-btn" onclick="switchSubTab('panel-groups', 'sub-group-invites', this)">
+            招待保留中 <span class="badge badge-danger" id="groupInviteBadge" style="display: none;">0</span>
+          </button>
+          <button class="sub-tab-btn" onclick="switchSubTab('panel-groups', 'sub-group-explore', this)">探す (全公開)</button>
         </div>
-      </div>
 
-      <!-- グループチャット履歴 -->
-      <div class="chat-messages-area" id="groupChatBox" style="background: var(--bg-main); border: 1px solid var(--border); border-radius: 6px;">
-        <div class="chat-bubble system-alert">グループルームが開設されました。</div>
-      </div>
-
-      <div style="display: flex; gap: 0.4rem; margin-top: 0.5rem; flex-shrink: 0;">
-        <input type="text" id="groupChatInput" placeholder="グループへメッセージ..." onkeydown="if(event.key==='Enter') sendGroupChatMessage()">
-        <button class="primary-btn" onclick="sendGroupChatMessage()">送信</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- 7. 【管理者専用】裏コマンド隠しコンソール -->
-  <div class="modal-overlay" id="adminModal">
-    <div class="modal admin-modal">
-      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.8rem;">
-        <h3 style="color: #ef4444; font-size: 1.05rem;">🚨 CNCM 管理者コンソール</h3>
-        <button class="icon-btn" onclick="closeAdmin()">✕</button>
-      </div>
-      <div id="adminAuthArea">
-        <input type="password" id="adminPassInput" placeholder="Admin Passcode" style="margin-bottom: 0.6rem;">
-        <button class="primary-btn" style="background: #ef4444; width: 100%;" onclick="verifyAdmin()">ロック解除</button>
-      </div>
-      <div id="adminContentArea" style="display: none;">
-        <p style="font-size: 0.8rem; color: #22c55e; margin-bottom: 0.6rem;">● 定刻監査プログラム：自動巡回中</p>
-        <div class="card" style="font-size: 0.8rem; margin-bottom: 0.6rem;">
-          <strong>特定ユーザーBAN（追放）</strong>
-          <input type="text" placeholder="追放対象のIDまたはネーム" style="margin-top: 0.4rem; margin-bottom: 0.4rem;">
-          <button class="primary-btn" style="background: #ef4444;" onclick="alert('対象の接続を切断し、アクセスを破棄しました。')">強制追放</button>
+        <!-- 検索・表示切替コントロールバー -->
+        <div class="group-control-bar">
+          <div class="search-box-row">
+            <input type="text" id="groupSearchInput" class="form-control" placeholder="🔍 グループ名・概要・タグでリアルタイム検索..." oninput="filterGroups()">
+            <!-- カード/リスト切替 (提案⑤) -->
+            <div class="view-switch-toggle">
+              <button class="btn-toggle active" id="viewCardBtn" onclick="setGroupViewMode('card')" title="カード表示">🪟</button>
+              <button class="btn-toggle" id="viewListBtn" onclick="setGroupViewMode('list')" title="リスト表示">📜</button>
+            </div>
+            <button class="btn btn-primary" onclick="openModal('newGroupModal')">＋ 新規作成</button>
+          </div>
+          <div class="tag-chip-scroller">
+            <span class="tag-chip active" onclick="setGroupTagFilter('all', this)">すべて</span>
+            <span class="tag-chip" onclick="setGroupTagFilter('leader', this)">👑 自分がリーダー</span>
+            <span class="tag-chip" onclick="setGroupTagFilter('映像', this)">#映像</span>
+            <span class="tag-chip" onclick="setGroupTagFilter('コード', this)">#コード</span>
+            <span class="tag-chip" onclick="setGroupTagFilter('描画', this)">#描画</span>
+            <span class="tag-chip" onclick="setGroupTagFilter('音響DTM', this)">#音響DTM</span>
+            <span class="tag-chip" onclick="setGroupTagFilter('3D', this)">#3D</span>
+            <span class="tag-chip" onclick="setGroupTagFilter('雑談', this)">#雑談</span>
+          </div>
         </div>
-      </div>
-    </div>
-  </div>
 
-  <!-- アプリヘッダー（固定） -->
-  <header>
-    <div class="logo">CanvasNetCreatorMEMBERSHIP</div>
-    <div class="header-actions">
-      <div class="avatar-icon" id="userAvatarHeader">🎨</div>
-      <span id="displayUser" style="font-size: 0.85rem; font-weight: bold;">未認証</span>
-      <button class="icon-btn" onclick="openModal('settingsModal')">⚙️ 設定</button>
-      <button class="icon-btn" onclick="openModal('loginModal')">アカウント</button>
-    </div>
-  </header>
+        <div id="sub-group-my" class="sub-panel active">
+          <div class="panel-scroll-box">
+            <div id="myGroupContainer" class="group-items-container view-card"></div>
+          </div>
+        </div>
 
-  <!-- メインタブナビゲーション（固定） -->
-  <nav class="main-nav" id="mainNavBar"></nav>
+        <div id="sub-group-invites" class="sub-panel">
+          <div class="panel-scroll-box">
+            <div id="invitedGroupContainer" class="group-items-container view-card"></div>
+          </div>
+        </div>
 
-  <!-- メイン表示領域（スクロールを独立化） -->
-  <main>
-    <!-- 1. ポート・ラウンジパネル -->
-    <div id="lounge" class="panel">
-      <!-- サブタブバー -->
-      <div class="sub-nav">
-        <button class="sub-tab-btn active" onclick="switchSubTab('lounge', 'subPort', this)">🟢 ポート（在席・作業）</button>
-        <button class="sub-tab-btn" onclick="switchSubTab('lounge', 'subLoungeChat', this)">💬 ラウンジ（オープンチャット）</button>
-      </div>
+        <div id="sub-group-explore" class="sub-panel">
+          <div class="panel-scroll-box">
+            <div id="allGroupContainer" class="group-items-container view-card"></div>
+          </div>
+        </div>
+      </section>
 
-      <!-- サブパネル①：ポート -->
-      <div id="subPort" class="sub-panel active">
-        <div class="scroll-container">
-          <!-- 自分のステータス設定 -->
+      <!-- 3. 相談・Q&Aスレッド パネル (詰め① Driveメディア直接埋め込み) -->
+      <section id="panel-forum" class="app-panel">
+        <div class="forum-split-layout">
+          <!-- スレッドリスト側 -->
+          <div class="forum-sidebar">
+            <div class="forum-actions-bar">
+              <button class="btn btn-primary" style="width: 100%;" onclick="openModal('newThreadModal')">＋ 相談スレッドを立てる</button>
+            </div>
+            <div class="forum-filter-tags">
+              <span class="filter-badge active" onclick="filterThreads('all', this)">すべて</span>
+              <span class="filter-badge" onclick="filterThreads('help', this)">🙋‍♂️ 助けて</span>
+              <span class="filter-badge" onclick="filterThreads('compare', this)">👀 どっち？</span>
+              <span class="filter-badge" onclick="filterThreads('review', this)">🎨 ラフ見て</span>
+              <span class="filter-badge" onclick="filterThreads('solved', this)">✅ 解決済</span>
+            </div>
+            <div class="thread-list-scroll" id="threadListScroll"></div>
+          </div>
+
+          <!-- スレッド詳細・返信ツリー側 -->
+          <div class="forum-main-content" id="threadDetailView">
+            <div class="empty-state-notice">左側のリストからスレッドを選択してください。</div>
+          </div>
+        </div>
+      </section>
+
+      <!-- 4. 企画・お題 パネル (詰め② ギャラリー＆ランキング) -->
+      <section id="panel-events" class="app-panel">
+        <div class="sub-tab-bar">
+          <button class="sub-tab-btn active" onclick="switchEventTab('event-topics', this)">🎯 開催中のお題</button>
+          <button class="sub-tab-btn" onclick="switchEventTab('event-ranking-trending', this)">🔥 急上昇ランキング</button>
+          <button class="sub-tab-btn" onclick="switchEventTab('event-ranking-hall', this)">🏆 歴代殿堂入り</button>
+          <button class="sub-tab-btn" onclick="openModal('newTopicModal')">＋ お題を起案 (Gold以上)</button>
+        </div>
+
+        <div class="panel-scroll-box">
+          <!-- お題一覧ビュー -->
+          <div id="eventTopicsView" class="event-view-section active">
+            <div class="topic-cards-grid" id="eventTopicsGrid"></div>
+          </div>
+
+          <!-- 提出作品ギャラリー＆ランキングビュー -->
+          <div id="eventGalleryView" class="event-view-section">
+            <div class="event-header-box">
+              <h2 id="galleryEventTitle">お題タイトル</h2>
+              <p id="galleryEventDesc" class="sub-text">概要</p>
+              <button class="btn btn-primary" onclick="openModal('submitWorkModal')">📤 作品をエントリー</button>
+            </div>
+            <div class="works-masonry-grid" id="worksGrid"></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- 5. 素材ドライブ パネル -->
+      <section id="panel-drive" class="app-panel">
+        <div class="panel-scroll-box">
           <div class="card">
-            <div class="card-title">自習室チェックイン・ステータス設定</div>
-            <div style="display: grid; grid-template-columns: 1fr 2fr; gap: 0.6rem; margin-bottom: 0.6rem;">
-              <div>
-                <label style="font-size: 0.75rem; color: var(--text-sub); display: block; margin-bottom: 0.2rem;">現在のモード</label>
-                <select id="myStatusSelect">
-                  <option value="ok">🟢 話しかけOK</option>
-                  <option value="busy">🔴 一人にしてください</option>
-                  <option value="work">🟡 作業中</option>
-                  <option value="rest">☕ 休憩中</option>
-                </select>
+            <div class="card-header">
+              <h3>📁 フリー素材・プロジェクト共有ドライブ</h3>
+            </div>
+            <p class="sub-text" style="margin-bottom: 1rem;">
+              団体のGoogle Drive共有スペースに直結。音源パラデータ、BGM、動画テクスチャ、AE/Blenderプリセット等を自由に閲覧・利用できます。
+            </p>
+            <div class="drive-shortcuts-grid">
+              <div class="drive-folder-card" onclick="openDriveLink('SE_BGM')">
+                <span class="folder-icon">🎵</span>
+                <strong>効果音・BGM素材</strong>
+                <span class="sub-text">WAV, MP3, ループ</span>
               </div>
-              <div>
-                <label style="font-size: 0.75rem; color: var(--text-sub); display: block; margin-bottom: 0.2rem;">作業の詳細・ひとこと</label>
-                <input type="text" id="myTaskInput" placeholder="例：新曲のミックスダウン、Blenderモデリング">
+              <div class="drive-folder-card" onclick="openDriveLink('VideoFootage')">
+                <span class="folder-icon">🎬</span>
+                <strong>動画テクスチャ・オーバーレイ</strong>
+                <span class="sub-text">4K, Prores, アルファ</span>
+              </div>
+              <div class="drive-folder-card" onclick="openDriveLink('Presets')">
+                <span class="folder-icon">⚙️</span>
+                <strong>プロジェクト・プリセット</strong>
+                <span class="sub-text">AE, PR, Blender</span>
+              </div>
+              <div class="drive-folder-card" onclick="openDriveLink('Fonts_Palette')">
+                <span class="folder-icon">🎨</span>
+                <strong>パレット・カラー設定</strong>
+                <span class="sub-text">LUT, スタイルガイド</span>
               </div>
             </div>
-            <button class="primary-btn" onclick="checkInLounge()">ステータスを更新 / チェックイン</button>
-          </div>
-
-          <!-- 在席メンバー一覧（枠内スクロールテーブル） -->
-          <div class="card" style="margin-bottom: 0;">
-            <div class="card-title">
-              <span>在席中のクリエイター</span>
-              <span style="font-size: 0.75rem; color: var(--text-sub); font-weight: normal;">タップして話しかけ申請</span>
-            </div>
-            <div class="member-table-wrapper">
-              <div class="member-table-scroll" id="memberTableList"></div>
-            </div>
           </div>
         </div>
-      </div>
+      </section>
+    </main>
+  </div>
 
-      <!-- サブパネル②：ラウンジ（オープンチャット） -->
-      <div id="subLoungeChat" class="sub-panel">
-        <div class="chat-view-container">
-          <div style="padding: 0.5rem 1rem; background: var(--bg-card); border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; flex-shrink: 0;">
-            <span style="font-size: 0.85rem; font-weight: bold;">💬 全体オープンチャット</span>
-            <button class="icon-btn" style="font-size: 0.75rem; padding: 0.2rem 0.5rem;" onclick="markAllAsRead()">すべて既読</button>
+  <!-- ================= 最重要項目：完全独立した管理者ダッシュボード ================= -->
+  <div id="adminDashboardRoot" class="admin-full-view" style="display: none;">
+    <aside class="admin-sidebar">
+      <div class="admin-brand">
+        <span class="badge badge-danger">ADMIN</span>
+        <h3>CNCM 統括司令</h3>
+      </div>
+      <div class="admin-role-info">
+        ログイン権限: <strong id="adminRoleDisplay" style="color: #ef4444;">オーナー</strong>
+      </div>
+      <nav class="admin-menu">
+        <button class="admin-menu-btn active" onclick="switchAdminTab('admin-audit', this)">🚨 リアルタイム監査・通報ログ</button>
+        <button class="admin-menu-btn" onclick="switchAdminTab('admin-users', this)">👥 アカウント＆モデレーション</button>
+        <button class="admin-menu-btn" onclick="switchAdminTab('admin-killswitch', this)">🛑 非常停止・緊急放送</button>
+      </nav>
+      <div class="admin-sidebar-footer">
+        <button class="btn btn-outline" style="width: 100%;" onclick="exitAdminConsole()">一般画面へ脱出</button>
+      </div>
+    </aside>
+
+    <main class="admin-main">
+      <!-- 監査ログ -->
+      <section id="admin-audit" class="admin-panel active">
+        <div class="admin-panel-header">
+          <h2>リアルタイム自動巡回・通報キュー</h2>
+          <span class="badge badge-ok">● 自動監査エンジン正常稼働中</span>
+        </div>
+        <div class="admin-card">
+          <div class="table-responsive">
+            <table class="admin-table">
+              <thead>
+                <tr>
+                  <th>検知時刻</th>
+                  <th>対象ユーザー</th>
+                  <th>検知フラグ・理由</th>
+                  <th>該当コンテンツ</th>
+                  <th>操作</th>
+                </tr>
+              </thead>
+              <tbody id="adminAuditTableBody"></tbody>
+            </table>
           </div>
+        </div>
+      </section>
 
-          <div class="chat-messages-area" id="openChatBox"></div>
-
-          <div class="chat-input-bar">
-            <input type="text" id="openChatInput" placeholder="全体に発言（@ネーム でメンション）" onkeydown="if(event.key==='Enter') sendOpenChatMessage()">
-            <button class="primary-btn" onclick="sendOpenChatMessage()">送信</button>
+      <!-- ユーザーモデレーション -->
+      <section id="admin-users" class="admin-panel">
+        <div class="admin-panel-header">
+          <h2>アカウント検索 ＆ 処置台帳</h2>
+        </div>
+        <div class="admin-card">
+          <div class="form-grid-2">
+            <input type="text" id="adminUserSearchQuery" class="form-control" placeholder="匿名ネームまたはIDを入力...">
+            <button class="btn btn-primary" onclick="searchUserForMod()">アカウント照会</button>
           </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- 2. グループパネル -->
-    <div id="groups" class="panel">
-      <!-- サブタブバー -->
-      <div class="sub-nav">
-        <button class="sub-tab-btn active" onclick="switchSubTab('groups', 'subMyGroups', this)">参加中・マイグループ</button>
-        <button class="sub-tab-btn" onclick="switchSubTab('groups', 'subInvitedGroups', this)">
-          招待保留中 <span class="badge-count" id="inviteBadge" style="display: none;">0</span>
-        </button>
-        <button class="sub-tab-btn" onclick="switchSubTab('groups', 'subAllGroups', this)">グループを探す</button>
-      </div>
-
-      <!-- 検索・フィルターセクション（固定） -->
-      <div style="padding: 0.6rem 1rem 0; flex-shrink: 0; background: var(--bg-main);">
-        <div style="display: flex; gap: 0.5rem; margin-bottom: 0.4rem;">
-          <input type="text" id="groupSearchInput" placeholder="🔍 グループ名・概要・タグで検索..." oninput="filterGroups()">
-          <button class="primary-btn" onclick="openModal('newGroupModal')">＋ 作成</button>
-        </div>
-        <div class="tag-filter-chips">
-          <div class="filter-chip active" onclick="setGroupFilter('all', this)">すべて</div>
-          <div class="filter-chip" onclick="setGroupFilter('leader', this)">👑 自分がリーダー</div>
-          <div class="filter-chip" onclick="setGroupFilter('映像', this)">#映像</div>
-          <div class="filter-chip" onclick="setGroupFilter('コード', this)">#コード</div>
-          <div class="filter-chip" onclick="setGroupFilter('描画', this)">#描画</div>
-          <div class="filter-chip" onclick="setGroupFilter('雑談', this)">#雑談</div>
-        </div>
-      </div>
-
-      <!-- サブパネル①：マイグループ -->
-      <div id="subMyGroups" class="sub-panel active">
-        <div class="scroll-container">
-          <div class="group-grid" id="myGroupsGrid"></div>
-        </div>
-      </div>
-
-      <!-- サブパネル②：招待保留中 -->
-      <div id="subInvitedGroups" class="sub-panel">
-        <div class="scroll-container">
-          <div class="group-grid" id="invitedGroupsGrid"></div>
-        </div>
-      </div>
-
-      <!-- サブパネル③：探す -->
-      <div id="subAllGroups" class="sub-panel">
-        <div class="scroll-container">
-          <div class="group-grid" id="allGroupsGrid"></div>
-        </div>
-      </div>
-    </div>
-
-    <!-- 3. 相談・Q&Aパネル -->
-    <div id="forum" class="panel">
-      <div class="scroll-container">
-        <div class="card">
-          <div class="card-title">💬 相談・壁打ち・意見募集</div>
-          <p style="color: var(--text-sub); font-size: 0.85rem; margin-bottom: 0.8rem;">
-            「称賛ファースト・マサカリ禁止」がルールです。作りかけの作品やプラグインの相談もお気軽に！
-          </p>
-          <button class="primary-btn">＋ 新しい相談トピックを立てる</button>
-        </div>
-      </div>
-    </div>
-
-    <!-- 4. 素材ドライブパネル -->
-    <div id="drive" class="panel">
-      <div class="scroll-container">
-        <div class="card">
-          <div class="card-title">📁 フリー素材・プロジェクト共有ドライブ</div>
-          <p style="color: var(--text-sub); font-size: 0.85rem; margin-bottom: 0.8rem;">
-            Google Driveの共有フォルダに連携。効果音、テクスチャ、プリセット等を自由利用できます。
-          </p>
-          <button class="primary-btn" onclick="alert('Google Drive共有リンクへ遷移します')">Google Driveを開く</button>
-        </div>
-      </div>
-    </div>
-
-    <!-- 5. 企画・お題パネル -->
-    <div id="event" class="panel">
-      <div class="scroll-container">
-        <div class="card">
-          <div class="card-title">🏆 企画・お題チャレンジ</div>
-          <p style="color: var(--text-sub); font-size: 0.85rem; margin-bottom: 0.8rem;">
-            定期開催のワンアワー制作会や、お題作品の投稿・いいねランキングのエリアです。
-          </p>
-          <button class="primary-btn">作品をエントリーする</button>
-        </div>
-      </div>
-    </div>
-  </main>
-
-  <script>
-    // --- 1. 禁止ワード & 基本設定 ---
-    const FORBIDDEN_WORDS = [
-      '本名', 'LINE', 'ライン', '本名教えて', 'どこ住み', '住所', 
-      '電話番号', '高校どこ', '学校どこ', 'インスタ', '会おう', 'DMして'
-    ];
-
-    let selectedAvatar = '🎨';
-    let selectedGroupIcon = '🎬';
-    let selectedGroupTags = [];
-    let currentFilterTag = 'all';
-
-    let targetMember = null;
-    let activeGroup = null;
-
-    // メインタブ定義
-    const defaultTabs = [
-      { id: 'lounge', name: '🏠 ポート・ラウンジ' },
-      { id: 'groups', name: '👥 グループ' },
-      { id: 'forum', name: '💬 相談・Q&A' },
-      { id: 'drive', name: '📁 素材ドライブ' },
-      { id: 'event', name: '🏆 企画・お題' }
-    ];
-    let currentTabOrder = JSON.parse(localStorage.getItem('cncm_tab_order')) || defaultTabs;
-
-    // 在席メンバー初期データ
-    let activeMembers = [
-      { id: 'm1', name: 'サウンド職人B', avatar: '🎧', status: 'ok', task: 'ドラムの打ち込み中。意見求む！' },
-      { id: 'm2', name: 'ペンシル04', avatar: '🖋️', status: 'busy', task: 'キャラデザのネーム制作（集中中）' },
-      { id: 'm3', name: 'カット編集マン', avatar: '🎬', status: 'work', task: 'PVの尺詰め作業' },
-      { id: 'm4', name: 'WebCoder_X', avatar: '💻', status: 'rest', task: '息抜きにYouTube徘徊中' }
-    ];
-
-    // グループ初期データ
-    let groups = [
-      {
-        id: 'g1',
-        icon: '🎧',
-        name: '夜更かしDTMセッション',
-        desc: '深夜帯に集まってBGMやループ音源を作るグループ',
-        leader: 'サウンド職人B',
-        members: ['サウンド職人B', 'WebCoder_X'],
-        invited: ['カット編集マン'],
-        tags: ['コード', '深夜制作'],
-        folder: 'CNCM_DTM_Night'
-      },
-      {
-        id: 'g2',
-        icon: '🎬',
-        name: 'AfterEffectsモーショングラフィックス',
-        desc: 'モーショングラフィックスの技法研究とプリセット共有',
-        leader: 'カット編集マン',
-        members: ['カット編集マン'],
-        invited: [],
-        tags: ['映像', 'モーショングラフィックス'],
-        folder: 'CNCM_AE_Motion'
-      }
-    ];
-
-    // オープンチャットメッセージ初期データ
-    let openMessages = [
-      { id: 1, author: 'サウンド職人B', avatar: '🎧', text: 'ラウンジ開きました。今夜も作業していきます', read: true },
-      { id: 2, author: 'ペンシル04', avatar: '🖋️', text: 'お疲れ様です！ネーム描いてます', read: true },
-      { id: 3, author: 'カット編集マン', avatar: '🎬', text: '新エフェクト試してるけど面白いですね', read: false },
-      { id: 4, author: 'WebCoder_X', avatar: '💻', text: '何か質問あればどうぞ！', read: false }
-    ];
-
-    // --- 2. Google認証 & プロフィール登録 ---
-    function mockGoogleAuth() {
-      alert('Google認証に成功しました。（セキュアトークン照合完了）\n続いてコミュニティ内専用の匿名プロフィールを設定してください。');
-      document.getElementById('profileSetupArea').style.display = 'block';
-    }
-
-    function pickAvatar(emoji, el) {
-      selectedAvatar = emoji;
-      document.querySelectorAll('#profileSetupArea .icon-opt').forEach(opt => opt.classList.remove('selected'));
-      el.classList.add('selected');
-    }
-
-    function completeRegistration() {
-      const name = document.getElementById('nameInput').value.trim();
-      if (!name) return alert('匿名ハンドルネームを入力してください');
-      
-      localStorage.setItem('cncm_username', name);
-      localStorage.setItem('cncm_avatar', selectedAvatar);
-      
-      updateUserHeader();
-      closeModal('loginModal');
-      renderAll();
-    }
-
-    function updateUserHeader() {
-      const name = localStorage.getItem('cncm_username') || '未認証';
-      const avatar = localStorage.getItem('cncm_avatar') || '🎨';
-      document.getElementById('displayUser').innerText = name;
-      document.getElementById('userAvatarHeader').innerText = avatar;
-    }
-
-    // --- 3. 設定カスタマイズ（テーマ・フォント・タブ並び替え） ---
-    function applyThemePreset(key) {
-      const themes = {
-        dark: { bg: '#12141a', card: '#1c202a', sub: '#161922', border: '#2a3142', text: '#f3f4f6' },
-        light: { bg: '#f8fafc', card: '#ffffff', sub: '#f1f5f9', border: '#e2e8f0', text: '#0f172a' },
-        midnight: { bg: '#0b0f19', card: '#111827', sub: '#161f30', border: '#1f2937', text: '#e5e7eb' },
-        terminal: { bg: '#0d1117', card: '#161b22', sub: '#1b222d', border: '#30363d', text: '#58a6ff' }
-      };
-      const t = themes[key];
-      if (!t) return;
-      document.documentElement.style.setProperty('--bg-main', t.bg);
-      document.documentElement.style.setProperty('--bg-card', t.card);
-      document.documentElement.style.setProperty('--bg-sub', t.sub);
-      document.documentElement.style.setProperty('--border', t.border);
-      document.documentElement.style.setProperty('--text', t.text);
-      localStorage.setItem('cncm_theme', key);
-    }
-
-    function setAccent(color) {
-      document.documentElement.style.setProperty('--accent', color);
-      localStorage.setItem('cncm_accent', color);
-    }
-
-    function setFont(fontKey) {
-      let fontStack = '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
-      if (fontKey === 'serif') fontStack = '"Yu Mincho", "Hiragino Mincho ProN", serif';
-      if (fontKey === 'monospace') fontStack = '"Fira Code", "Consolas", monospace';
-      document.documentElement.style.setProperty('--font-family', fontStack);
-      localStorage.setItem('cncm_font', fontKey);
-    }
-
-    function renderMainTabs() {
-      const nav = document.getElementById('mainNavBar');
-      nav.innerHTML = '';
-      currentTabOrder.forEach((tab, index) => {
-        const btn = document.createElement('button');
-        btn.className = `tab-btn ${index === 0 ? 'active' : ''}`;
-        btn.innerText = tab.name;
-        btn.onclick = (e) => switchMainTab(tab.id, e.target);
-        nav.appendChild(btn);
-      });
-      if (currentTabOrder.length > 0) {
-        showMainPanel(currentTabOrder[0].id);
-      }
-      renderTabOrderConfig();
-    }
-
-    function switchMainTab(tabId, targetBtn) {
-      document.querySelectorAll('.main-nav .tab-btn').forEach(b => b.classList.remove('active'));
-      document.querySelectorAll('main > .panel').forEach(p => p.classList.remove('active'));
-      targetBtn.classList.add('active');
-      showMainPanel(tabId);
-    }
-
-    function showMainPanel(tabId) {
-      document.querySelectorAll('main > .panel').forEach(p => p.classList.remove('active'));
-      const activePanel = document.getElementById(tabId);
-      if (activePanel) activePanel.classList.add('active');
-    }
-
-    function renderTabOrderConfig() {
-      const list = document.getElementById('tabOrderList');
-      if (!list) return;
-      list.innerHTML = '';
-      currentTabOrder.forEach((tab, i) => {
-        const item = document.createElement('div');
-        item.className = 'tab-order-item';
-        item.innerHTML = `
-          <span>${tab.name}</span>
-          <div class="order-btns">
-            ${i > 0 ? `<button onclick="moveTab(${i}, -1)">▲</button>` : ''}
-            ${i < currentTabOrder.length - 1 ? `<button onclick="moveTab(${i}, 1)">▼</button>` : ''}
-          </div>
-        `;
-        list.appendChild(item);
-      });
-    }
-
-    function moveTab(index, direction) {
-      const targetIndex = index + direction;
-      const temp = currentTabOrder[index];
-      currentTabOrder[index] = currentTabOrder[targetIndex];
-      currentTabOrder[targetIndex] = temp;
-      localStorage.setItem('cncm_tab_order', JSON.stringify(currentTabOrder));
-      renderMainTabs();
-    }
-
-    function resetSettings() {
-      localStorage.removeItem('cncm_theme');
-      localStorage.removeItem('cncm_accent');
-      localStorage.removeItem('cncm_font');
-      localStorage.removeItem('cncm_tab_order');
-      location.reload();
-    }
-
-    // --- 4. サブタブ切り替え機構 ---
-    function switchSubTab(parentPanelId, subPanelId, btn) {
-      const parent = document.getElementById(parentPanelId);
-      parent.querySelectorAll('.sub-tab-btn').forEach(b => b.classList.remove('active'));
-      parent.querySelectorAll('.sub-panel').forEach(p => p.classList.remove('active'));
-
-      btn.classList.add('active');
-      const targetSub = document.getElementById(subPanelId);
-      if (targetSub) targetSub.classList.add('active');
-    }
-
-    // --- 5. ポート：在席メンバーテーブル ---
-    function renderMembers() {
-      const list = document.getElementById('memberTableList');
-      list.innerHTML = '';
-
-      activeMembers.forEach(m => {
-        const row = document.createElement('div');
-        row.className = 'member-row';
-        row.onclick = () => openTalkConfirm(m);
-
-        let statusDotClass = 'dot-work';
-        let statusLabel = '作業中';
-        if (m.status === 'ok') { statusDotClass = 'dot-ok'; statusLabel = '話しかけOK'; }
-        if (m.status === 'busy') { statusDotClass = 'dot-busy'; statusLabel = '全集中（声かけNG）'; }
-        if (m.status === 'rest') { statusDotClass = 'dot-rest'; statusLabel = '休憩中'; }
-
-        row.innerHTML = `
-          <div style="position: relative; flex-shrink: 0;">
-            <div class="avatar-icon" style="width:36px;height:36px;font-size:1.2rem;">${m.avatar}</div>
-            <span class="status-dot ${statusDotClass}"></span>
-          </div>
-          <div style="flex: 1; min-width: 0;">
-            <div style="display: flex; justify-content: space-between; align-items: center;">
-              <strong style="font-size: 0.85rem;">${m.name}</strong>
-              <span style="font-size: 0.72rem;" class="${m.status === 'busy' ? 'tag-busy' : 'tag-ok'}">${statusLabel}</span>
-            </div>
-            <div style="color: var(--text-sub); font-size: 0.75rem; text-overflow: ellipsis; white-space: nowrap; overflow: hidden; margin-top: 0.15rem;">
-              ${m.task}
+          <div id="modUserResult" style="margin-top: 1rem; display: none;">
+            <div class="mod-profile-box">
+              <h4 id="modTargetName">対象者</h4>
+              <p id="modTargetDetails" class="sub-text">ステータス</p>
+              <div class="mod-btn-group">
+                <button class="btn btn-warning" onclick="applyPenalty('warn')">イエローカード (警告)</button>
+                <button class="btn btn-warning" onclick="applyPenalty('mute')">24時間発言ミュート</button>
+                <button class="btn btn-danger" onclick="applyPenalty('ban')">コミュニティ永久BAN (追放)</button>
+              </div>
             </div>
           </div>
-        `;
-        list.appendChild(row);
-      });
-    }
+        </div>
+      </section>
 
-    function checkInLounge() {
-      const name = localStorage.getItem('cncm_username') || '自分';
-      const avatar = localStorage.getItem('cncm_avatar') || '🎨';
-      const status = document.getElementById('myStatusSelect').value;
-      const task = document.getElementById('myTaskInput').value.trim() || '集中作業中';
+      <!-- キルスイッチ＆緊急放送 -->
+      <section id="admin-killswitch" class="admin-panel">
+        <div class="admin-panel-header">
+          <h2 style="color: #ef4444;">緊急安全装置 (キルスイッチ)</h2>
+        </div>
+        <div class="admin-card" style="border: 2px solid #ef4444;">
+          <h3>全画面 緊急アナウンス配信</h3>
+          <p class="sub-text">すべての接続中クライアントのヘッダー直下に赤帯の警告を発令します。</p>
+          <div style="display: flex; gap: 0.5rem; margin: 1rem 0;">
+            <input type="text" id="emergencyBroadcastInput" class="form-control" placeholder="緊急メッセージ内容を入力...">
+            <button class="btn btn-danger" onclick="broadcastEmergencyAlert()">発令</button>
+            <button class="btn btn-secondary" onclick="clearEmergencyAlert()">解除</button>
+          </div>
 
-      activeMembers = activeMembers.filter(m => m.name !== name);
-      activeMembers.unshift({ id: 'me', name: name, avatar: avatar, status: status, task: task });
-      renderMembers();
-      alert('ステータスを更新しました！');
-    }
+          <hr style="border-color: var(--border); margin: 1.5rem 0;">
 
-    // --- 6. 1対1 話しかけ申請フロー ---
-    function openTalkConfirm(member) {
-      const myName = localStorage.getItem('cncm_username');
-      if (member.name === myName) return alert('これはあなた自身です。');
+          <h3>コミュニティ・セーフモード (一時凍結)</h3>
+          <p class="sub-text">荒らし発生時、一般メンバーによるオープンチャット発言と新規グループ作成を一時ロックします。</p>
+          <button class="btn btn-danger" id="safeModeToggleBtn" onclick="toggleCommunitySafeMode()">🔒 セーフモードを発動する</button>
+        </div>
+      </section>
+    </main>
+  </div>
 
-      targetMember = member;
-      document.getElementById('targetAvatarDisplay').innerText = member.avatar;
-      document.getElementById('targetNameDisplay').innerText = `${member.name} に話しかける？`;
-      document.getElementById('targetStatusDisplay').innerText = `作業内容：${member.task}`;
+  <!-- ================= モーダル群 ================= -->
 
-      const busyWarn = document.getElementById('busyWarning');
-      const sendBtn = document.getElementById('sendTalkBtn');
-
-      if (member.status === 'busy') {
-        busyWarn.style.display = 'block';
-        sendBtn.disabled = true;
-        sendBtn.style.opacity = '0.5';
-      } else {
-        busyWarn.style.display = 'none';
-        sendBtn.disabled = false;
-        sendBtn.style.opacity = '1';
-      }
-
-      openModal('talkConfirmModal');
-    }
-
-    function requestTalk() {
-      closeModal('talkConfirmModal');
-      alert(`${targetMember.name} さんに話しかけ申請を送信しました。\n承認されるまで少々お待ちください。`);
-      
-      setTimeout(() => {
-        document.getElementById('chatWithName').innerText = targetMember.name;
-        document.getElementById('chatWithAvatar').innerText = targetMember.avatar;
-        openModal('privateChatModal');
-      }, 1000);
-    }
-
-    function sendPrivateChatMessage() {
-      const input = document.getElementById('privateChatInput');
-      let text = input.value.trim();
-      if (!text) return;
-
-      const chatBox = document.getElementById('privateChatBox');
-      let violation = false;
-      FORBIDDEN_WORDS.forEach(w => {
-        if (text.includes(w)) {
-          violation = true;
-          text = text.split(w).join(' [検閲削除] ');
-        }
-      });
-
-      const b = document.createElement('div');
-      b.className = 'chat-bubble mine';
-      b.innerText = text;
-      chatBox.appendChild(b);
-
-      if (violation) {
-        const alertDiv = document.createElement('div');
-        alertDiv.className = 'chat-bubble system-alert';
-        alertDiv.innerText = '⚠️ 禁止ワードを検知したためシステムにより自動検閲されました。';
-        chatBox.appendChild(alertDiv);
-      }
-
-      chatBox.scrollTop = chatBox.scrollHeight;
-      input.value = '';
-    }
-
-    // --- 7. ラウンジ：オープンチャット ---
-    function renderOpenChat() {
-      const box = document.getElementById('openChatBox');
-      box.innerHTML = '';
-      const myName = localStorage.getItem('cncm_username') || '';
-
-      let firstUnreadFound = false;
-
-      openMessages.forEach(msg => {
-        if (!msg.read && !firstUnreadFound) {
-          firstUnreadFound = true;
-          const sep = document.createElement('div');
-          sep.className = 'unread-separator';
-          sep.id = 'unreadSeparatorLine';
-          sep.innerText = '―― ここから未読メッセージ ――';
-          box.appendChild(sep);
-        }
-
-        const isMine = (msg.author === myName);
-        const isMentioned = myName && msg.text.includes(`@${myName}`);
-
-        const bubble = document.createElement('div');
-        bubble.className = `chat-bubble ${isMine ? 'mine' : 'other'} ${isMentioned ? 'mentioned' : ''}`;
+  <!-- プロフィール・Google認証モーダル -->
+  <div class="modal-backdrop" id="profileModal">
+    <div class="modal-sheet">
+      <div class="modal-header">
+        <h3>アカウント・プロフィール</h3>
+        <button class="modal-close-btn" onclick="closeModal('profileModal')">✕</button>
+      </div>
+      <div class="modal-body">
+        <button class="btn btn-google" onclick="handleGoogleAuthClick()">🔴 Googleアカウントで認証</button>
         
-        bubble.innerHTML = `
-          ${!isMine ? `<div class="chat-author">${msg.avatar} ${msg.author}</div>` : ''}
-          <div>${msg.text}</div>
-        `;
-        box.appendChild(bubble);
-      });
+        <div class="form-group" style="margin-top: 1rem;">
+          <label>匿名ハンドルネーム</label>
+          <input type="text" id="profileNameInput" class="form-control" placeholder="例：匿名クリエイター01" maxlength="15">
+        </div>
 
-      const sepElem = document.getElementById('unreadSeparatorLine');
-      if (sepElem) {
-        sepElem.scrollIntoView({ behavior: 'smooth', block: 'center' });
-      } else {
-        box.scrollTop = box.scrollHeight;
-      }
-    }
+        <div class="form-group">
+          <label>アバター絵文字 (提案⑥大幅拡張)</label>
+          <div class="emoji-picker-grid" id="avatarEmojiGrid"></div>
+        </div>
 
-    function sendOpenChatMessage() {
-      const input = document.getElementById('openChatInput');
-      let text = input.value.trim();
-      if (!text) return;
+        <div class="form-group">
+          <label>または端末内画像をアップロード (提案⑦)</label>
+          <input type="file" id="avatarFileInput" accept="image/*" class="form-control" onchange="handleImageUpload(event, 'userAvatar')">
+        </div>
 
-      const myName = localStorage.getItem('cncm_username') || '匿名';
-      const myAvatar = localStorage.getItem('cncm_avatar') || '🎨';
+        <button class="btn btn-primary" style="width: 100%;" onclick="saveUserProfile()">保存する</button>
+      </div>
+    </div>
+  </div>
 
-      FORBIDDEN_WORDS.forEach(w => {
-        if (text.includes(w)) text = text.split(w).join(' [検閲削除] ');
-      });
+  <!-- 環境設定モーダル (全設定完全保持) -->
+  <div class="modal-backdrop" id="settingsModal">
+    <div class="modal-sheet">
+      <div class="modal-header">
+        <h3>🎨 ワークスペース環境設定</h3>
+        <button class="modal-close-btn" onclick="closeModal('settingsModal')">✕</button>
+      </div>
+      <div class="modal-body">
+        <div class="form-group">
+          <label>カラーテーマ</label>
+          <select id="themeSettingSelect" class="form-control" onchange="changeColorTheme(this.value)">
+            <option value="dark">ダークモード (標準)</option>
+            <option value="light">ライトモード</option>
+            <option value="midnight">ミッドナイトネイビー</option>
+            <option value="terminal">レトロターミナル (黒×緑)</option>
+          </select>
+        </div>
 
-      openMessages.push({
-        id: Date.now(),
-        author: myName,
-        avatar: myAvatar,
-        text: text,
-        read: true
-      });
-
-      input.value = '';
-      renderOpenChat();
-    }
-
-    function markAllAsRead() {
-      openMessages.forEach(m => m.read = true);
-      renderOpenChat();
-    }
-
-    // --- 8. グループ管理・サブタブ・フィルター検索 ---
-    function pickGroupIcon(icon, el) {
-      selectedGroupIcon = icon;
-      document.querySelectorAll('#groupIconSelector .icon-opt').forEach(o => o.classList.remove('selected'));
-      el.classList.add('selected');
-    }
-
-    function toggleTagChoice(el, tag) {
-      if (selectedGroupTags.includes(tag)) {
-        selectedGroupTags = selectedGroupTags.filter(t => t !== tag);
-        el.classList.remove('selected');
-      } else {
-        selectedGroupTags.push(tag);
-        el.classList.add('selected');
-      }
-    }
-
-    function setGroupFilter(tag, el) {
-      currentFilterTag = tag;
-      document.querySelectorAll('.tag-filter-chips .filter-chip').forEach(c => c.classList.remove('active'));
-      el.classList.add('active');
-      filterGroups();
-    }
-
-    function filterGroups() {
-      renderGroups();
-    }
-
-    function renderGroups() {
-      const myGrid = document.getElementById('myGroupsGrid');
-      const invGrid = document.getElementById('invitedGroupsGrid');
-      const allGrid = document.getElementById('allGroupsGrid');
-
-      myGrid.innerHTML = '';
-      invGrid.innerHTML = '';
-      allGrid.innerHTML = '';
-
-      const myName = localStorage.getItem('cncm_username') || '';
-      const searchQuery = document.getElementById('groupSearchInput').value.trim().toLowerCase();
-
-      let inviteCount = 0;
-
-      groups.forEach(g => {
-        // 検索クエリマッチ
-        const matchSearch = !searchQuery || 
-          g.name.toLowerCase().includes(searchQuery) || 
-          g.desc.toLowerCase().includes(searchQuery) ||
-          g.tags.some(t => t.toLowerCase().includes(searchQuery));
-
-        // タグフィルターマッチ
-        let matchFilter = true;
-        if (currentFilterTag === 'leader') {
-          matchFilter = (g.leader === myName);
-        } else if (currentFilterTag !== 'all') {
-          matchFilter = g.tags.includes(currentFilterTag);
-        }
-
-        if (!matchSearch || !matchFilter) return;
-
-        const isLeader = (g.leader === myName);
-        const isMember = g.members.includes(myName);
-        const isInvited = g.invited && g.invited.includes(myName);
-
-        if (isInvited) inviteCount++;
-
-        const card = createGroupCardElement(g, isLeader, isMember, isInvited);
-
-        // 各サブタブに振り分け
-        if (isMember) myGrid.appendChild(card.cloneNode(true));
-        if (isInvited) invGrid.appendChild(card.cloneNode(true));
-        allGrid.appendChild(card);
-      });
-
-      // バッジの更新
-      const badge = document.getElementById('inviteBadge');
-      if (inviteCount > 0) {
-        badge.innerText = inviteCount;
-        badge.style.display = 'inline-block';
-      } else {
-        badge.style.display = 'none';
-      }
-    }
-
-    function createGroupCardElement(g, isLeader, isMember, isInvited) {
-      const card = document.createElement('div');
-      card.className = 'group-card';
-      
-      const tagPills = g.tags.map(t => `<span class="group-tag-pill">#${t}</span>`).join('');
-
-      card.innerHTML = `
-        <div style="display: flex; justify-content: space-between; align-items: center;">
-          <div style="display: flex; align-items: center; gap: 0.4rem;">
-            <span style="font-size: 1.2rem;">${g.icon}</span>
-            <strong style="font-size: 0.9rem;">${g.name}</strong>
+        <div class="form-group">
+          <label>アクセントカラー</label>
+          <div class="color-palette-row">
+            <span class="color-swatch" style="background: #6366f1;" onclick="changeAccentColor('#6366f1')"></span>
+            <span class="color-swatch" style="background: #06b6d4;" onclick="changeAccentColor('#06b6d4')"></span>
+            <span class="color-swatch" style="background: #10b981;" onclick="changeAccentColor('#10b981')"></span>
+            <span class="color-swatch" style="background: #f43f5e;" onclick="changeAccentColor('#f43f5e')"></span>
+            <span class="color-swatch" style="background: #f59e0b;" onclick="changeAccentColor('#f59e0b')"></span>
           </div>
-          ${isLeader ? '<span class="leader-badge">👑 リーダー</span>' : ''}
         </div>
-        <p style="font-size: 0.78rem; color: var(--text-sub); margin: 0.2rem 0;">${g.desc}</p>
-        <div class="group-tags">${tagPills}</div>
-        <div style="font-size: 0.72rem; color: var(--text-sub); margin-top: 0.2rem;">
-          メンバー: ${g.members.length}名 (${g.members.join(', ')})
+
+        <div class="form-group">
+          <label>フォントスタイル</label>
+          <select id="fontSettingSelect" class="form-control" onchange="changeFontStyle(this.value)">
+            <option value="sans-serif">ゴシック系・モダン (標準)</option>
+            <option value="serif">明朝系・クラシック</option>
+            <option value="monospace">等幅・コーディング風</option>
+          </select>
         </div>
-        <div style="display: flex; gap: 0.4rem; margin-top: 0.4rem;">
-          ${isMember ? `
-            <button class="primary-btn" style="flex: 1; font-size: 0.78rem; padding: 0.35rem;" onclick="enterGroup('${g.id}')">部屋に入る</button>
-          ` : isInvited ? `
-            <button class="primary-btn" style="flex: 1; font-size: 0.78rem; padding: 0.35rem;" onclick="acceptGroupInvite('${g.id}')">参加する</button>
-            <button class="icon-btn" style="flex: 1; font-size: 0.78rem; padding: 0.35rem;" onclick="rejectGroupInvite('${g.id}')">辞退する</button>
-          ` : `
-            <button class="icon-btn" style="flex: 1; font-size: 0.78rem; padding: 0.35rem;" onclick="alert('リーダーに直接話しかけて招待をリクエストしてください。')">詳細を見る</button>
-          `}
+
+        <div class="form-group">
+          <label>メインタブ並び順の変更 (▲▼で入れ替え)</label>
+          <div class="tab-order-editor" id="tabOrderEditor"></div>
         </div>
-      `;
-      return card;
-    }
 
-    function createGroup() {
-      const name = document.getElementById('groupNameInput').value.trim();
-      const desc = document.getElementById('groupDescInput').value.trim();
-      const customTags = document.getElementById('groupCustomTagInput').value.trim();
-      const myName = localStorage.getItem('cncm_username');
+        <div style="display: flex; gap: 0.5rem; margin-top: 1rem;">
+          <button class="btn btn-primary" style="flex: 1;" onclick="closeModal('settingsModal')">設定を保存</button>
+          <button class="btn btn-outline" onclick="resetAllSettings()">初期化</button>
+        </div>
+      </div>
+    </div>
+  </div>
 
-      if (!myName) return alert('先にアカウント設定を完了してください');
-      if (!name) return alert('グループ名を入力してください');
+  <!-- 新規グループ作成モーダル (冠アイコン＆タグ拡張＆画像アップロード対応) -->
+  <div class="modal-backdrop" id="newGroupModal">
+    <div class="modal-sheet">
+      <div class="modal-header">
+        <h3>👥 新規グループを作成</h3>
+        <button class="modal-close-btn" onclick="closeModal('newGroupModal')">✕</button>
+      </div>
+      <div class="modal-body">
+        <div class="form-group">
+          <label>グループ冠絵文字 (提案⑥大幅拡張)</label>
+          <div class="emoji-picker-grid" id="groupCrownEmojiGrid"></div>
+        </div>
 
-      let allTags = [...selectedGroupTags];
-      if (customTags) {
-        const parsed = customTags.split(',').map(t => t.trim()).filter(t => t.length > 0);
-        allTags = [...allTags, ...parsed];
-      }
+        <div class="form-group">
+          <label>または端末内画像を冠アイコンに設定 (提案⑦)</label>
+          <input type="file" id="groupIconFileInput" accept="image/*" class="form-control" onchange="handleImageUpload(event, 'groupIcon')">
+        </div>
 
-      const folderName = `CNCM_${name.replace(/\s+/g, '_')}`;
+        <div class="form-group">
+          <label>グループ名</label>
+          <input type="text" id="newGroupName" class="form-control" placeholder="例：AfterEffectsモーショングラフィックス研究会">
+        </div>
 
-      const newG = {
-        id: 'g_' + Date.now(),
-        icon: selectedGroupIcon,
-        name: name,
-        desc: desc || 'クリエイティブ・プロジェクト',
-        leader: myName,
-        members: [myName],
-        invited: [],
-        tags: allTags,
-        folder: folderName
-      };
+        <div class="form-group">
+          <label>グループ概要</label>
+          <input type="text" id="newGroupDesc" class="form-control" placeholder="例：日常のループ映像やプリセットの共有・相談">
+        </div>
 
-      groups.push(newG);
-      renderGroups();
-      closeModal('newGroupModal');
-      alert(`グループ「${name}」を作成しました！👑`);
-    }
+        <div class="form-group">
+          <label>ジャンルタグ選択</label>
+          <div class="selectable-chip-box" id="newGroupTagChips">
+            <span class="chip-choice" onclick="toggleTagChoice(this, '映像')">#映像</span>
+            <span class="chip-choice" onclick="toggleTagChoice(this, 'コード')">#コード</span>
+            <span class="chip-choice" onclick="toggleTagChoice(this, '描画')">#描画</span>
+            <span class="chip-choice" onclick="toggleTagChoice(this, '音響DTM')">#音響DTM</span>
+            <span class="chip-choice" onclick="toggleTagChoice(this, '3D')">#3D</span>
+            <span class="chip-choice" onclick="toggleTagChoice(this, '雑談')">#雑談</span>
+          </div>
+        </div>
 
-    function enterGroup(groupId) {
-      activeGroup = groups.find(g => g.id === groupId);
-      if (!activeGroup) return;
+        <div class="form-group">
+          <label>自由入力カスタムタグ (カンマ区切り)</label>
+          <input type="text" id="newGroupCustomTags" class="form-control" placeholder="例：AfterEffects, Blender">
+        </div>
 
-      const myName = localStorage.getItem('cncm_username');
-      const isLeader = (activeGroup.leader === myName);
+        <button class="btn btn-primary" style="width: 100%;" onclick="submitCreateGroup()">作成してリーダーに就任 👑</button>
+      </div>
+    </div>
+  </div>
 
-      document.getElementById('activeGroupIcon').innerText = activeGroup.icon;
-      document.getElementById('activeGroupName').innerText = activeGroup.name;
-      document.getElementById('driveFolderName').innerText = activeGroup.folder;
-      document.getElementById('activeGroupRoleBadge').innerHTML = isLeader ? '<span class="leader-badge">👑 リーダー</span>' : '';
-      
-      const leaderPanel = document.getElementById('leaderControlPanel');
-      leaderPanel.style.display = isLeader ? 'block' : 'none';
+  <!-- スレッド新規作成モーダル (Driveメディア埋め込み対応) -->
+  <div class="modal-backdrop" id="newThreadModal">
+    <div class="modal-sheet modal-sheet-lg">
+      <div class="modal-header">
+        <h3>💬 相談・Q&Aスレッドを作成</h3>
+        <button class="modal-close-btn" onclick="closeModal('newThreadModal')">✕</button>
+      </div>
+      <div class="modal-body">
+        <div class="form-group">
+          <label>相談カテゴリー</label>
+          <select id="newThreadCategory" class="form-control">
+            <option value="help">🙋‍♂️ 助けて (技術的詰まり・エラー)</option>
+            <option value="compare">👀 どっち？ (比較・どちらが良いか意見募集)</option>
+            <option value="review">🎨 ラフ見て (作りかけの感想・壁打ち)</option>
+          </select>
+        </div>
 
-      openModal('groupChatModal');
-    }
+        <div class="form-group">
+          <label>タイトル</label>
+          <input type="text" id="newThreadTitle" class="form-control" placeholder="例：Premiereで特定エフェクト適用時のレンダリングエラーについて">
+        </div>
 
-    function sendGroupInviteFromLeader() {
-      const targetUser = document.getElementById('inviteUserField').value.trim();
-      if (!targetUser) return alert('招待するメンバー名を入力してください');
+        <div class="form-group">
+          <label>相談内容・背景</label>
+          <textarea id="newThreadBody" class="form-control" rows="4" placeholder="具体的な状況、試したこと、質問したい要点を記述してください。"></textarea>
+        </div>
 
-      if (!activeGroup.invited) activeGroup.invited = [];
-      if (!activeGroup.invited.includes(targetUser) && !activeGroup.members.includes(targetUser)) {
-        activeGroup.invited.push(targetUser);
-        alert(`${targetUser} さんへ承認制の参加招待を送信しました！`);
-        document.getElementById('inviteUserField').value = '';
-        renderGroups();
-      } else {
-        alert('すでに参加しているか、招待済みです。');
-      }
-    }
+        <div class="form-group">
+          <label>Google Drive メディア埋め込み (動画/画像/音源のプレビューURLまたはID)</label>
+          <input type="text" id="newThreadDriveUrl" class="form-control" placeholder="例：https://drive.google.com/file/d/1A2B3C.../view または ファイルID">
+          <span class="sub-text">※Google Drive上の共有設定を「リンクを知っている全員が閲覧可能」にしてください。</span>
+        </div>
 
-    function acceptGroupInvite(groupId) {
-      const g = groups.find(x => x.id === groupId);
-      const myName = localStorage.getItem('cncm_username');
-      if (g && myName) {
-        g.invited = g.invited.filter(u => u !== myName);
-        if (!g.members.includes(myName)) g.members.push(myName);
-        renderGroups();
-        alert(`グループ「${g.name}」に参加しました！`);
-      }
-    }
+        <button class="btn btn-primary" style="width: 100%;" onclick="submitCreateThread()">スレッドを投稿</button>
+      </div>
+    </div>
+  </div>
 
-    function rejectGroupInvite(groupId) {
-      const g = groups.find(x => x.id === groupId);
-      const myName = localStorage.getItem('cncm_username');
-      if (g && myName) {
-        g.invited = g.invited.filter(u => u !== myName);
-        renderGroups();
-      }
-    }
+  <!-- 企画お題 新規起案モーダル (Goldランク以上) -->
+  <div class="modal-backdrop" id="newTopicModal">
+    <div class="modal-sheet">
+      <div class="modal-header">
+        <h3>🎯 新しい企画・お題を起案</h3>
+        <button class="modal-close-btn" onclick="closeModal('newTopicModal')">✕</button>
+      </div>
+      <div class="modal-body">
+        <div class="form-group">
+          <label>お題タイトル</label>
+          <input type="text" id="newTopicTitle" class="form-control" placeholder="例：雨の音を使った15秒ループBGM制作">
+        </div>
+        <div class="form-group">
+          <label>お題のレギュレーション・説明</label>
+          <textarea id="newTopicDesc" class="form-control" rows="3" placeholder="制作条件、提出フォーマット、推奨ハッシュタグ等"></textarea>
+        </div>
+        <div class="form-group">
+          <label>課題用フリー素材 Driveフォルダリンク (任意)</label>
+          <input type="text" id="newTopicDriveFolder" class="form-control" placeholder="https://drive.google.com/drive/folders/...">
+        </div>
+        <button class="btn btn-primary" style="width: 100%;" onclick="submitCreateTopic()">お題を公式公開する</button>
+      </div>
+    </div>
+  </div>
 
-    function transferLeaderRole() {
-      const newLeader = prompt(`誰にリーダー権限を譲渡しますか？\n参加者: ${activeGroup.members.join(', ')}`);
-      if (newLeader && activeGroup.members.includes(newLeader)) {
-        activeGroup.leader = newLeader;
-        renderGroups();
-        alert(`リーダー権限を ${newLeader} さんに譲渡しました。`);
-        closeModal('groupChatModal');
-      } else if (newLeader) {
-        alert('グループ内に存在しないメンバーです。');
-      }
-    }
+  <!-- 作品エントリーモーダル -->
+  <div class="modal-backdrop" id="submitWorkModal">
+    <div class="modal-sheet">
+      <div class="modal-header">
+        <h3>📤 お題に作品を提出</h3>
+        <button class="modal-close-btn" onclick="closeModal('submitWorkModal')">✕</button>
+      </div>
+      <div class="modal-body">
+        <div class="form-group">
+          <label>作品タイトル</label>
+          <input type="text" id="submitWorkTitle" class="form-control" placeholder="例：Midnight Rain Loop #01">
+        </div>
+        <div class="form-group">
+          <label>作品のGoogle DriveプレビューURL (動画/画像/音源)</label>
+          <input type="text" id="submitWorkDriveUrl" class="form-control" placeholder="https://drive.google.com/file/d/.../view">
+        </div>
+        <div class="form-group">
+          <label>ひとことアピール</label>
+          <input type="text" id="submitWorkComment" class="form-control" placeholder="こだわった点、使用プラグインなど">
+        </div>
+        <button class="btn btn-primary" style="width: 100%;" onclick="submitWorkEntry()">エントリー完了</button>
+      </div>
+    </div>
+  </div>
 
-    function kickMemberPrompt() {
-      const target = prompt(`追放（Kick）するメンバーを入力してください\n参加者: ${activeGroup.members.join(', ')}`);
-      if (target && activeGroup.members.includes(target)) {
-        if (target === activeGroup.leader) return alert('リーダー自身を追放することはできません。');
-        activeGroup.members = activeGroup.members.filter(m => m !== target);
-        renderGroups();
-        alert(`${target} さんをグループから追放しました。`);
-      }
-    }
+  <!-- 1対1 完全秘匿チャットモーダル -->
+  <div class="modal-backdrop" id="privateChatModal">
+    <div class="modal-sheet modal-chat-sheet">
+      <div class="modal-header">
+        <div style="display: flex; align-items: center; gap: 0.5rem;">
+          <span id="privateChatPartnerAvatar" style="font-size: 1.2rem;">🎨</span>
+          <strong id="privateChatPartnerName">相手のネーム</strong>
+        </div>
+        <button class="modal-close-btn" onclick="closeModal('privateChatModal')">✕</button>
+      </div>
+      <div class="modal-body chat-messages-box" id="privateChatStream">
+        <div class="chat-system-bubble">
+          🛡️ 完全秘匿ダイレクトチャットです。第三者や運営には開示されません。<br>個人情報・詮索ワードは自動検閲されます。
+        </div>
+      </div>
+      <div class="modal-footer chat-input-bar">
+        <input type="text" id="privateChatInput" class="form-control" placeholder="メッセージを入力..." onkeydown="if(event.key==='Enter') sendPrivateChatMessage()">
+        <button class="btn btn-primary" onclick="sendPrivateChatMessage()">送信</button>
+      </div>
+    </div>
+  </div>
 
-    function sendGroupChatMessage() {
-      const input = document.getElementById('groupChatInput');
-      let text = input.value.trim();
-      if (!text) return;
+  <!-- 管理者パスコード解錠モーダル -->
+  <div class="modal-backdrop" id="adminUnlockModal">
+    <div class="modal-sheet">
+      <div class="modal-header">
+        <h3 style="color: #ef4444;">🚨 管理者認証</h3>
+        <button class="modal-close-btn" onclick="closeModal('adminUnlockModal')">✕</button>
+      </div>
+      <div class="modal-body" style="text-align: center;">
+        <p class="sub-text" style="margin-bottom: 1rem;">管理者コンソールへ突入するためのセキュリティコードを入力してください。</p>
+        <input type="password" id="adminSecretInput" class="form-control" placeholder="Security Passcode" style="margin-bottom: 1rem;">
+        <button class="btn btn-danger" style="width: 100%;" onclick="verifyAndLaunchAdmin()">認証してコンソール起動</button>
+      </div>
+    </div>
+  </div>
 
-      const myName = localStorage.getItem('cncm_username') || '匿名';
-      const myAvatar = localStorage.getItem('cncm_avatar') || '🎨';
-
-      FORBIDDEN_WORDS.forEach(w => {
-        if (text.includes(w)) text = text.split(w).join(' [検閲削除] ');
-      });
-
-      const box = document.getElementById('groupChatBox');
-      const b = document.createElement('div');
-      b.className = 'chat-bubble mine';
-      b.innerHTML = `<div class="chat-author" style="color:#e0e7ff;">${myAvatar} ${myName}</div><div>${text}</div>`;
-      box.appendChild(b);
-      box.scrollTop = box.scrollHeight;
-      input.value = '';
-    }
-
-    function openDriveMock() {
-      alert('Google Drive上の専用グループ共有フォルダへアクセスします。');
-    }
-
-    // --- 9. 管理者用裏コマンド ("admin") ---
-    let keyBuffer = '';
-    window.addEventListener('keydown', (e) => {
-      if (['INPUT', 'SELECT', 'TEXTAREA'].includes(document.activeElement.tagName)) return;
-      keyBuffer += e.key.toLowerCase();
-      if (keyBuffer.length > 5) keyBuffer = keyBuffer.slice(-5);
-      if (keyBuffer === 'admin') {
-        openModal('adminModal');
-        keyBuffer = '';
-      }
-    });
-
-    function closeAdmin() {
-      closeModal('adminModal');
-      document.getElementById('adminAuthArea').style.display = 'block';
-      document.getElementById('adminContentArea').style.display = 'none';
-      document.getElementById('adminPassInput').value = '';
-    }
-
-    function verifyAdmin() {
-      if (document.getElementById('adminPassInput').value === 'canvas2026') {
-        document.getElementById('adminAuthArea').style.display = 'none';
-        document.getElementById('adminContentArea').style.display = 'block';
-      } else {
-        alert('無効なパスコードです');
-      }
-    }
-
-    // --- 10. モーダル操作ユーティリティ ---
-    function openModal(id) {
-      document.getElementById(id).style.display = 'flex';
-    }
-    function closeModal(id) {
-      document.getElementById(id).style.display = 'none';
-    }
-
-    // --- 11. 初期起動 & レンダリング ---
-    function renderAll() {
-      renderMembers();
-      renderOpenChat();
-      renderGroups();
-    }
-
-    window.onload = () => {
-      updateUserHeader();
-
-      // 設定復元
-      const savedTheme = localStorage.getItem('cncm_theme') || 'dark';
-      document.getElementById('themeSelect').value = savedTheme;
-      applyThemePreset(savedTheme);
-
-      const savedAccent = localStorage.getItem('cncm_accent');
-      if (savedAccent) setAccent(savedAccent);
-
-      const savedFont = localStorage.getItem('cncm_font') || 'sans-serif';
-      document.getElementById('fontSelect').value = savedFont;
-      setFont(savedFont);
-
-      renderMainTabs();
-      renderAll();
-
-      if (!localStorage.getItem('cncm_username')) {
-        openModal('loginModal');
-      }
-    };
-  </script>
+  <script src="app.js"></script>
 </body>
 </html>
