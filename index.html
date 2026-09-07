@@ -1,0 +1,607 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CanvasNetCreatorMEMBERSHIP</title>
+  <style>
+    /* 動的にJSから書き換えるCSSカスタムプロパティ */
+    :root {
+      --bg-main: #12141a;
+      --bg-card: #1c202a;
+      --border: #2a3142;
+      --accent: #6366f1;
+      --text: #f3f4f6;
+      --text-sub: #9ca3af;
+      --active-green: #22c55e;
+      --font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      --content-max-width: 1100px;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: var(--font-family);
+    }
+
+    body {
+      background-color: var(--bg-main);
+      color: var(--text);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      transition: background-color 0.2s, color 0.2s;
+    }
+
+    /* ヘッダー */
+    header {
+      background-color: var(--bg-card);
+      border-bottom: 1px solid var(--border);
+      padding: 0.8rem 1.5rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .logo {
+      font-weight: bold;
+      font-size: 1.1rem;
+      letter-spacing: 0.5px;
+    }
+
+    .header-actions {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      font-size: 0.85rem;
+    }
+
+    /* ナビゲーションタブ */
+    nav {
+      display: flex;
+      gap: 0.5rem;
+      padding: 0.6rem 1.5rem;
+      background-color: var(--bg-card);
+      border-bottom: 1px solid var(--border);
+      overflow-x: auto;
+    }
+
+    .tab-btn {
+      background: none;
+      border: 1px solid transparent;
+      color: var(--text-sub);
+      padding: 0.5rem 1rem;
+      border-radius: 6px;
+      cursor: pointer;
+      font-weight: 500;
+      white-space: nowrap;
+      transition: all 0.15s;
+    }
+
+    .tab-btn:hover {
+      color: var(--text);
+      background-color: var(--border);
+    }
+
+    .tab-btn.active {
+      color: #ffffff;
+      background-color: var(--accent);
+    }
+
+    /* メインコンテンツ領域 */
+    main {
+      flex: 1;
+      padding: 1.5rem;
+      max-width: var(--content-max-width);
+      width: 100%;
+      margin: 0 auto;
+    }
+
+    .panel {
+      display: none;
+    }
+
+    .panel.active {
+      display: block;
+    }
+
+    /* レイアウト切り替え用グリッド */
+    .lounge-grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 1.25rem;
+    }
+
+    .lounge-grid.two-column {
+      grid-template-columns: 1fr 1.5fr;
+    }
+
+    /* カード・コンテナ */
+    .card {
+      background-color: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 1.25rem;
+      margin-bottom: 1.25rem;
+    }
+
+    .card-title {
+      font-size: 1.05rem;
+      margin-bottom: 0.8rem;
+      font-weight: bold;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    /* 自習室リスト */
+    .status-badge {
+      display: inline-block;
+      width: 9px;
+      height: 9px;
+      background-color: var(--active-green);
+      border-radius: 50%;
+      margin-right: 0.5rem;
+    }
+
+    .member-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0.75rem 0;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .member-item:last-child {
+      border-bottom: none;
+    }
+
+    /* フォームパーツ */
+    input[type="text"], select {
+      width: 100%;
+      background: var(--bg-main);
+      border: 1px solid var(--border);
+      padding: 0.6rem 0.8rem;
+      border-radius: 6px;
+      color: var(--text);
+      margin-bottom: 0.75rem;
+      outline: none;
+    }
+
+    button.btn {
+      background-color: var(--border);
+      color: var(--text);
+      border: 1px solid var(--border);
+      padding: 0.5rem 1rem;
+      border-radius: 6px;
+      cursor: pointer;
+      font-weight: 500;
+      transition: opacity 0.15s;
+    }
+
+    button.btn:hover {
+      opacity: 0.85;
+    }
+
+    button.btn-primary {
+      background-color: var(--accent);
+      color: #ffffff;
+      border: none;
+    }
+
+    /* カスタマイズ設定モーダル */
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.65);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 100;
+      padding: 1rem;
+    }
+
+    .modal-overlay.open {
+      display: flex;
+    }
+
+    .modal {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 1.5rem;
+      width: 100%;
+      max-width: 520px;
+      max-height: 85vh;
+      overflow-y: auto;
+    }
+
+    .config-group {
+      margin-bottom: 1.25rem;
+      padding-bottom: 1rem;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .config-label {
+      display: block;
+      font-size: 0.85rem;
+      color: var(--text-sub);
+      margin-bottom: 0.5rem;
+      font-weight: bold;
+    }
+
+    .color-pickers {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 0.5rem;
+    }
+
+    .color-item {
+      display: flex;
+      flex-direction: column;
+      font-size: 0.75rem;
+      gap: 0.3rem;
+    }
+
+    .color-item input[type="color"] {
+      width: 100%;
+      height: 36px;
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      background: none;
+      cursor: pointer;
+    }
+
+    .tab-order-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: var(--bg-main);
+      padding: 0.5rem 0.75rem;
+      border-radius: 6px;
+      margin-bottom: 0.4rem;
+      font-size: 0.85rem;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- カスタマイズ設定モーダル -->
+  <div class="modal-overlay" id="customModal">
+    <div class="modal">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.25rem;">
+        <h3 style="font-size:1.1rem;">⚙️ ワークスペース設定</h3>
+        <button class="btn" style="padding:0.2rem 0.6rem;" onclick="toggleModal('customModal')">✕</button>
+      </div>
+
+      <!-- カラー・テーマ設定 -->
+      <div class="config-group">
+        <label class="config-label">テーマプリセット</label>
+        <div style="display:flex; gap:0.5rem; margin-bottom:1rem;">
+          <button class="btn" onclick="applyPreset('dark')">🌙 ダーク</button>
+          <button class="btn" onclick="applyPreset('light')">☀️ ライト</button>
+          <button class="btn" onclick="applyPreset('cyber')">👾 サイバー</button>
+        </div>
+
+        <label class="config-label">カラー詳細指定</label>
+        <div class="color-pickers">
+          <div class="color-item">
+            <span>背景色</span>
+            <input type="color" id="pickerBg" onchange="updateCustomColors()">
+          </div>
+          <div class="color-item">
+            <span>アクセント色</span>
+            <input type="color" id="pickerAccent" onchange="updateCustomColors()">
+          </div>
+          <div class="color-item">
+            <span>文字色</span>
+            <input type="color" id="pickerText" onchange="updateCustomColors()">
+          </div>
+        </div>
+      </div>
+
+      <!-- フォント設定 -->
+      <div class="config-group">
+        <label class="config-label">フォント</label>
+        <select id="fontSelect" onchange="updateFont(this.value)">
+          <option value='-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif'>システム標準（ゴシック）</option>
+          <option value='"Yu Mincho", "Hiragino Mincho ProN", serif'>明朝体（エディトリアル調）</option>
+          <option value='"SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace'>等幅・モノスペース（制作・開発調）</option>
+          <option value='"Hiragino Maru Gothic ProN", "Kosugi Maru", sans-serif'>丸ゴシック（カジュアル）</option>
+        </select>
+      </div>
+
+      <!-- レイアウト幅とカラム配置 -->
+      <div class="config-group">
+        <label class="config-label">画面幅 ＆ 配置</label>
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:0.5rem;">
+          <select id="widthSelect" onchange="updateWidth(this.value)">
+            <option value="900px">標準幅 (900px)</option>
+            <option value="1200px" selected>ワイド (1200px)</option>
+            <option value="100%">フル幅 (100%)</option>
+          </select>
+          <select id="colSelect" onchange="updateColumns(this.value)">
+            <option value="1fr">1カラム（縦並び）</option>
+            <option value="two-column" selected>2カラム（並列）</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- タブ順序の変更 -->
+      <div class="config-group">
+        <label class="config-label">タブの表示順序（上下で入れ替え）</label>
+        <div id="tabOrderList"></div>
+      </div>
+
+      <button class="btn btn-primary" style="width:100%;" onclick="resetConfig()">デフォルト設定に戻す</button>
+    </div>
+  </div>
+
+  <!-- ヘッダー -->
+  <header>
+    <div class="logo">CanvasNetCreatorMEMBERSHIP</div>
+    <div class="header-actions">
+      <span id="displayUser">匿名クリエイター</span>
+      <button class="btn" style="padding:0.35rem 0.7rem;" onclick="toggleModal('customModal')">⚙️ 表示設定</button>
+    </div>
+  </header>
+
+  <!-- ナビゲーション（JSで順序を生成） -->
+  <nav id="navBar"></nav>
+
+  <!-- メインコンテンツ -->
+  <main>
+    <!-- 自習室ラウンジ -->
+    <div id="panel-lounge" class="panel active">
+      <div class="lounge-grid two-column" id="loungeGridContainer">
+        <div>
+          <div class="card">
+            <div class="card-title">作業ステータス</div>
+            <input type="text" id="taskInput" placeholder="現在の作業内容（例：3Dモデリングのテクスチャ調整中）">
+            <button class="btn btn-primary" style="width:100%;" onclick="updateTask()">チェックイン</button>
+          </div>
+        </div>
+
+        <div>
+          <div class="card">
+            <div class="card-title">自習室メンバー</div>
+            <div id="memberList">
+              <div class="member-item">
+                <div><span class="status-badge"></span><strong>サウンド職人B</strong></div>
+                <div style="color: var(--text-sub); font-size: 0.85rem;">ベースラインのミックス調整</div>
+              </div>
+              <div class="member-item">
+                <div><span class="status-badge"></span><strong>ペンシル04</strong></div>
+                <div style="color: var(--text-sub); font-size: 0.85rem;">キャラデザ線画作業</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 相談・Q&A掲示板 -->
+    <div id="panel-forum" class="panel">
+      <div class="card">
+        <div class="card-title">💬 相談・Q&A（マサカリ禁止・称賛ファースト）</div>
+        <p style="color: var(--text-sub); font-size: 0.9rem; margin-bottom: 1rem;">
+          技術的な質問や未完成のアイデアを自由に投げて意見をもらおう。
+        </p>
+        <button class="btn btn-primary">＋ 新しいスレッドを立てる</button>
+      </div>
+    </div>
+
+    <!-- 素材ドライブ -->
+    <div id="panel-drive" class="panel">
+      <div class="card">
+        <div class="card-title">📁 Google Drive 素材共有ライブラリ</div>
+        <p style="color: var(--text-sub); font-size: 0.9rem; margin-bottom: 1rem;">
+          メンバー共用のプリセット・フリー音源・テクスチャ置き場です。
+        </p>
+        <button class="btn btn-primary" onclick="alert('Google Drive共有フォルダへ遷移します')">Driveフォルダを開く</button>
+      </div>
+    </div>
+
+    <!-- 企画・イベント -->
+    <div id="panel-event" class="panel">
+      <div class="card">
+        <div class="card-title">🏆 企画・ランキング・お題募集</div>
+        <p style="color: var(--text-sub); font-size: 0.9rem; margin-bottom: 1rem;">
+          定期コンペやお題制作の投票会場です。
+        </p>
+        <button class="btn btn-primary">現在のお題を見る</button>
+      </div>
+    </div>
+  </main>
+
+  <script>
+    // デフォルトの設定データ
+    const defaultConfig = {
+      theme: 'dark',
+      bgMain: '#12141a',
+      bgCard: '#1c202a',
+      accent: '#6366f1',
+      text: '#f3f4f6',
+      font: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
+      maxWidth: '1200px',
+      columns: 'two-column',
+      tabs: [
+        { id: 'lounge', label: '🏠 自習室' },
+        { id: 'forum', label: '💬 相談・Q&A' },
+        { id: 'drive', label: '📁 素材ドライブ' },
+        { id: 'event', label: '🏆 企画・お題' }
+      ]
+    };
+
+    let userConfig = JSON.parse(localStorage.getItem('cncm_config')) || defaultConfig;
+    let activeTabId = userConfig.tabs[0].id;
+
+    // 初期化
+    window.onload = () => {
+      applyConfigToUI();
+      renderTabs();
+      renderTabOrderList();
+    };
+
+    // モーダル開閉
+    function toggleModal(id) {
+      const modal = document.getElementById(id);
+      modal.classList.toggle('open');
+      if (modal.classList.contains('open')) {
+        syncPickers();
+      }
+    }
+
+    // 設定を画面全体（CSS変数・レイアウト）に反映
+    function applyConfigToUI() {
+      const r = document.documentElement.style;
+      r.setProperty('--bg-main', userConfig.bgMain);
+      r.setProperty('--bg-card', userConfig.bgCard);
+      r.setProperty('--accent', userConfig.accent);
+      r.setProperty('--text', userConfig.text);
+      r.setProperty('--font-family', userConfig.font);
+      r.setProperty('--content-max-width', userConfig.maxWidth);
+
+      // カラム配置
+      const grid = document.getElementById('loungeGridContainer');
+      if (grid) {
+        grid.className = `lounge-grid ${userConfig.columns === 'two-column' ? 'two-column' : ''}`;
+      }
+
+      // ドロップダウン類の状態合わせ
+      document.getElementById('fontSelect').value = userConfig.font;
+      document.getElementById('widthSelect').value = userConfig.maxWidth;
+      document.getElementById('colSelect').value = userConfig.columns;
+    }
+
+    function saveConfig() {
+      localStorage.setItem('cncm_config', JSON.stringify(userConfig));
+      applyConfigToUI();
+    }
+
+    // プリセット適用
+    function applyPreset(type) {
+      if (type === 'dark') {
+        userConfig.bgMain = '#12141a';
+        userConfig.bgCard = '#1c202a';
+        userConfig.accent = '#6366f1';
+        userConfig.text = '#f3f4f6';
+      } else if (type === 'light') {
+        userConfig.bgMain = '#f8fafc';
+        userConfig.bgCard = '#ffffff';
+        userConfig.accent = '#4f46e5';
+        userConfig.text = '#0f172a';
+      } else if (type === 'cyber') {
+        userConfig.bgMain = '#090d16';
+        userConfig.bgCard = '#111827';
+        userConfig.accent = '#06b6d4';
+        userConfig.text = '#a5f3fc';
+      }
+      syncPickers();
+      saveConfig();
+    }
+
+    function syncPickers() {
+      document.getElementById('pickerBg').value = rgbToHex(userConfig.bgMain);
+      document.getElementById('pickerAccent').value = rgbToHex(userConfig.accent);
+      document.getElementById('pickerText').value = rgbToHex(userConfig.text);
+    }
+
+    function rgbToHex(color) {
+      if (color.startsWith('#')) return color;
+      return '#12141a';
+    }
+
+    // 各個別設定の更新
+    function updateCustomColors() {
+      userConfig.bgMain = document.getElementById('pickerBg').value;
+      userConfig.accent = document.getElementById('pickerAccent').value;
+      userConfig.text = document.getElementById('pickerText').value;
+      userConfig.bgCard = userConfig.bgMain === '#f8fafc' ? '#ffffff' : adjustBrightness(userConfig.bgMain, 15);
+      saveConfig();
+    }
+
+    function updateFont(val) { userConfig.font = val; saveConfig(); }
+    function updateWidth(val) { userConfig.maxWidth = val; saveConfig(); }
+    function updateColumns(val) { userConfig.columns = val; saveConfig(); }
+
+    // ナビゲーションタブの動的描画
+    function renderTabs() {
+      const nav = document.getElementById('navBar');
+      nav.innerHTML = '';
+      userConfig.tabs.forEach(tab => {
+        const btn = document.createElement('button');
+        btn.className = `tab-btn ${tab.id === activeTabId ? 'active' : ''}`;
+        btn.innerText = tab.label;
+        btn.onclick = () => switchTab(tab.id);
+        nav.appendChild(btn);
+      });
+    }
+
+    function switchTab(tabId) {
+      activeTabId = tabId;
+      document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+      const target = document.getElementById(`panel-${tabId}`);
+      if (target) target.classList.add('active');
+      renderTabs();
+    }
+
+    // タブ並び替えリストの描画
+    function renderTabOrderList() {
+      const container = document.getElementById('tabOrderList');
+      container.innerHTML = '';
+      userConfig.tabs.forEach((tab, index) => {
+        const div = document.createElement('div');
+        div.className = 'tab-order-item';
+        div.innerHTML = `
+          <span>${tab.label}</span>
+          <div>
+            <button class="btn" style="padding:0.2rem 0.5rem;" onclick="moveTab(${index}, -1)" ${index === 0 ? 'disabled' : ''}>▲</button>
+            <button class="btn" style="padding:0.2rem 0.5rem;" onclick="moveTab(${index}, 1)" ${index === userConfig.tabs.length - 1 ? 'disabled' : ''}>▼</button>
+          </div>
+        `;
+        container.appendChild(div);
+      });
+    }
+
+    function moveTab(index, direction) {
+      const target = index + direction;
+      const temp = userConfig.tabs[index];
+      userConfig.tabs[index] = userConfig.tabs[target];
+      userConfig.tabs[target] = temp;
+      saveConfig();
+      renderTabs();
+      renderTabOrderList();
+    }
+
+    function resetConfig() {
+      userConfig = JSON.parse(JSON.stringify(defaultConfig));
+      saveConfig();
+      renderTabs();
+      renderTabOrderList();
+      syncPickers();
+    }
+
+    function adjustBrightness(hex, percent) {
+      let num = parseInt(hex.replace("#",""), 16),
+          amt = Math.round(2.55 * percent),
+          R = (num >> 16) + amt,
+          G = (num >> 8 & 0x00FF) + amt,
+          B = (num & 0x0000FF) + amt;
+      return "#" + (0x1000000 + (R<255?R<1?0:R:255)*0x10000 + (G<255?G<1?0:G:255)*0x100 + (B<255?B<1?0:B:255)).toString(16).slice(1);
+    }
+
+    function updateTask() {
+      const task = document.getElementById('taskInput').value.trim();
+      if (!task) return;
+      const list = document.getElementById('memberList');
+      const item = document.createElement('div');
+      item.className = 'member-item';
+      item.innerHTML = `<div><span class="status-badge"></span><strong>あなた</strong></div><div style="color: var(--text-sub); font-size: 0.85rem;">${task}</div>`;
+      list.prepend(item);
+      document.getElementById('taskInput').value = '';
+    }
+  </script>
+</body>
+</html>
