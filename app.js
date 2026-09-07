@@ -1,6 +1,6 @@
 /**
  * CanvasNetCreatorMEMBERSHIP (CNCM) Core Script
- * 完全分離アーキテクチャ - 状態管理・独自ダイアログ・Drive連携・管理者ダッシュボード
+ * バージョン：2.1 (タブID自動整合・サブパネル強制起動アップデート版)
  */
 
 // ================= 1. 定数 ＆ アプリ初期状態 =================
@@ -28,7 +28,7 @@ let isSafeMode = false;
 let groupViewMode = 'card';
 let selectedGroupTags = [];
 
-// メインタブ定義 (永続化対応)
+// メインタブ定義（HTML内のIDと完全一致）
 const defaultTabs = [
   { id: 'panel-lounge', name: '🏠 ポート・ラウンジ' },
   { id: 'panel-groups', name: '👥 グループ' },
@@ -36,9 +36,21 @@ const defaultTabs = [
   { id: 'panel-events', name: '🏆 企画・お題' },
   { id: 'panel-drive', name: '📁 素材ドライブ' }
 ];
-let currentTabs = JSON.parse(localStorage.getItem('cncm_tab_order')) || defaultTabs;
 
-// データストア (モック)
+// 【自動修正ロジック】過去の古いタブID（panel-が付いていないID）が残っていれば自動修復
+let savedTabOrder = null;
+try {
+  savedTabOrder = JSON.parse(localStorage.getItem('cncm_tab_order'));
+  if (savedTabOrder && savedTabOrder.some(t => !t.id.startsWith('panel-'))) {
+    localStorage.removeItem('cncm_tab_order');
+    savedTabOrder = null;
+  }
+} catch (e) {
+  savedTabOrder = null;
+}
+let currentTabs = savedTabOrder || defaultTabs;
+
+// データストア
 let loungeMembers = [
   { id: 'm1', name: 'サウンド職人B', avatar: '🎧', status: 'ok', task: 'ドラムトラックの打ち込み中。意見求む！' },
   { id: 'm2', name: 'ペンシル04', avatar: '🖋️', status: 'busy', task: 'キービジュアルのネーム（全集中中）' },
@@ -158,32 +170,35 @@ function showCustomDialog(options) {
 
 // ================= 3. 全画面制御システム (提案③) =================
 const fullscreenBtn = document.getElementById('fullscreenToggleBtn');
-fullscreenBtn.addEventListener('click', toggleFullscreen);
+if (fullscreenBtn) {
+  fullscreenBtn.addEventListener('click', toggleFullscreen);
+}
 
 function toggleFullscreen() {
   if (!document.fullscreenElement) {
     document.documentElement.requestFullscreen().catch(() => {});
-    fullscreenBtn.innerText = '✕ 全画面終了';
+    if (fullscreenBtn) fullscreenBtn.innerText = '✕ 全画面終了';
   } else {
     if (document.exitFullscreen) document.exitFullscreen();
-    fullscreenBtn.innerText = '⛶ 全画面';
+    if (fullscreenBtn) fullscreenBtn.innerText = '⛶ 全画面';
   }
 }
 
-// 最初のタップで自動全画面トライ
 window.addEventListener('click', function autoFullOnce() {
   if (!document.fullscreenElement && !window._fsTriggered) {
     window._fsTriggered = true;
     document.documentElement.requestFullscreen().catch(() => {});
-    fullscreenBtn.innerText = '✕ 全画面終了';
+    if (fullscreenBtn) fullscreenBtn.innerText = '✕ 全画面終了';
   }
   window.removeEventListener('click', autoFullOnce);
 }, { once: true });
 
-// ================= 4. タブ＆レイアウト描画 =================
+// ================= 4. タブ＆レイアウト描画（修復済み） =================
 function renderMainTabs() {
   const bar = document.getElementById('mainTabBar');
+  if (!bar) return;
   bar.innerHTML = '';
+
   currentTabs.forEach((tab, index) => {
     const btn = document.createElement('button');
     btn.className = `main-tab-btn ${index === 0 ? 'active' : ''}`;
@@ -191,25 +206,48 @@ function renderMainTabs() {
     btn.onclick = (e) => switchMainTab(tab.id, e.target);
     bar.appendChild(btn);
   });
-  if (currentTabs.length > 0) showMainPanel(currentTabs[0].id);
+
+  // 最初のタブのパネルを強制的に立ち上げる
+  if (currentTabs.length > 0) {
+    showMainPanel(currentTabs[0].id);
+  }
   renderTabOrderEditor();
 }
 
 function switchMainTab(panelId, btn) {
   document.querySelectorAll('.main-tab-btn').forEach(b => b.classList.remove('active'));
-  document.querySelectorAll('.app-panel').forEach(p => p.classList.remove('active'));
   btn.classList.add('active');
   showMainPanel(panelId);
 }
 
 function showMainPanel(panelId) {
+  // すべてのパネルを一度隠す
   document.querySelectorAll('.app-panel').forEach(p => p.classList.remove('active'));
+  
   const target = document.getElementById(panelId);
-  if (target) target.classList.add('active');
+  if (target) {
+    target.classList.add('active');
+    
+    // サブタブが存在する場合、アクティブなサブタブがなければ1番目を強制表示
+    const activeSubBtn = target.querySelector('.sub-tab-btn.active');
+    const activeSubPanel = target.querySelector('.sub-panel.active');
+
+    if (!activeSubBtn || !activeSubPanel) {
+      const firstSubBtn = target.querySelector('.sub-tab-btn');
+      const firstSubPanel = target.querySelector('.sub-panel');
+      if (firstSubBtn && firstSubPanel) {
+        target.querySelectorAll('.sub-tab-btn').forEach(b => b.classList.remove('active'));
+        target.querySelectorAll('.sub-panel').forEach(p => p.classList.remove('active'));
+        firstSubBtn.classList.add('active');
+        firstSubPanel.classList.add('active');
+      }
+    }
+  }
 }
 
 function switchSubTab(parentPanelId, subPanelId, btn) {
   const parent = document.getElementById(parentPanelId);
+  if (!parent) return;
   parent.querySelectorAll('.sub-tab-btn').forEach(b => b.classList.remove('active'));
   parent.querySelectorAll('.sub-panel').forEach(p => p.classList.remove('active'));
   btn.classList.add('active');
@@ -217,7 +255,7 @@ function switchSubTab(parentPanelId, subPanelId, btn) {
   if (targetSub) targetSub.classList.add('active');
 }
 
-// ================= 5. 設定カスタマイズ機能 (完全保持) =================
+// ================= 5. 設定カスタマイズ機能 =================
 function changeColorTheme(themeKey) {
   const themes = {
     dark: { bg: '#12141a', card: '#1c202a', sub: '#161922', border: '#2a3142', text: '#f3f4f6' },
@@ -280,10 +318,11 @@ function resetAllSettings() {
   location.reload();
 }
 
-// ================= 6. プロフィール・アバター・画像アップロード (提案⑥・⑦・⑧) =================
+// ================= 6. プロフィール・アバター・画像アップロード =================
 function initEmojiPickers() {
   const userGrid = document.getElementById('avatarEmojiGrid');
   const groupGrid = document.getElementById('groupCrownEmojiGrid');
+  if (!userGrid || !groupGrid) return;
   userGrid.innerHTML = '';
   groupGrid.innerHTML = '';
 
@@ -358,7 +397,6 @@ function updateUserUI() {
     avatarBox.innerText = currentUser.avatar;
   }
 
-  // 提案⑧ ランクロール判定
   const badge = document.getElementById('headerRankBadge');
   if (currentUser.likesReceived >= 50) {
     currentUser.rank = 'gold';
@@ -375,9 +413,10 @@ function updateUserUI() {
   }
 }
 
-// ================= 7. ポート＆ラウンジ (ダブルタップいいね・提案①) =================
+// ================= 7. ポート＆ラウンジ (オープンチャット) =================
 function renderLoungeMembers() {
   const list = document.getElementById('loungeMemberList');
+  if (!list) return;
   list.innerHTML = '';
 
   loungeMembers.forEach(m => {
@@ -441,9 +480,9 @@ function openTalkConfirm(member) {
   });
 }
 
-// オープンチャット描画 ＆ ダブルタップいいね
 function renderOpenChat() {
   const stream = document.getElementById('openChatStream');
+  if (!stream) return;
   stream.innerHTML = '';
   let firstUnread = false;
 
@@ -467,7 +506,6 @@ function renderOpenChat() {
       ${msg.likes > 0 ? `<div class="like-counter-pill">❤️ ${msg.likes}</div>` : ''}
     `;
 
-    // 提案① ダブルタップでいいね
     let lastTap = 0;
     bubble.addEventListener('pointerdown', (e) => {
       const now = Date.now();
@@ -505,13 +543,8 @@ function sendOpenChatMessage() {
   let text = input.value.trim();
   if (!text) return;
 
-  // 禁止ワード検閲
-  let cens = false;
   FORBIDDEN_WORDS.forEach(w => {
-    if (text.includes(w)) {
-      cens = true;
-      text = text.split(w).join(' [検閲削除] ');
-    }
+    if (text.includes(w)) text = text.split(w).join(' [検閲削除] ');
   });
 
   openChatMessages.push({
@@ -532,7 +565,6 @@ function markOpenChatAsRead() {
   renderOpenChat();
 }
 
-// 1対1チャット送信
 function sendPrivateChatMessage() {
   const input = document.getElementById('privateChatInput');
   let text = input.value.trim();
@@ -551,7 +583,7 @@ function sendPrivateChatMessage() {
   input.value = '';
 }
 
-// ================= 8. グループ管理 (提案④・⑤) =================
+// ================= 8. グループ管理 =================
 function setGroupViewMode(mode) {
   groupViewMode = mode;
   document.getElementById('viewCardBtn').classList.toggle('active', mode === 'card');
@@ -572,6 +604,7 @@ function renderGroups() {
   const myBox = document.getElementById('myGroupContainer');
   const invBox = document.getElementById('invitedGroupContainer');
   const allBox = document.getElementById('allGroupContainer');
+  if (!myBox || !invBox || !allBox) return;
 
   myBox.className = `group-items-container view-${groupViewMode}`;
   invBox.className = `group-items-container view-${groupViewMode}`;
@@ -614,7 +647,6 @@ function renderGroups() {
         ` : isInvited ? `
           <button class="btn btn-primary btn-small" onclick="acceptGroupInvite('${g.id}')">承認して参加</button>
         ` : `
-          <!-- 提案④ グループカードから直接参加申請 -->
           <button class="btn btn-outline btn-small" onclick="applyToGroup('${g.id}')">参加申請</button>
         `}
       </div>
@@ -679,9 +711,10 @@ function toggleTagChoice(el, tag) {
   }
 }
 
-// ================= 9. 相談・Q&Aスレッド ＆ Drive埋め込み (詰め①) =================
+// ================= 9. 相談・Q&Aスレッド ＆ Drive埋め込み =================
 function renderForumThreads() {
   const list = document.getElementById('threadListScroll');
+  if (!list) return;
   list.innerHTML = '';
 
   forumThreads.forEach(t => {
@@ -703,8 +736,8 @@ function renderForumThreads() {
 
 function selectThread(t) {
   const main = document.getElementById('threadDetailView');
+  if (!main) return;
   
-  // Google Drive URLからプレビューiframeを生成
   let driveFrame = '';
   if (t.driveUrl) {
     let embedSrc = t.driveUrl.replace(/\/view.*$/, '/preview');
@@ -774,7 +807,7 @@ function submitThreadReply(tid) {
 
   const t = forumThreads.find(x => x.id === tid);
   t.replies.push({ author: currentUser.name, text: txt, best: false });
-  currentUser.likesReceived += 2; // 回答でランク貢献
+  currentUser.likesReceived += 2;
   updateUserUI();
   selectThread(t);
 }
@@ -787,9 +820,10 @@ function resolveThread(tid) {
   showCustomDialog({ icon: '🎉', title: '解決！', message: 'スレッドを解決済みに設定しました。' });
 }
 
-// ================= 10. 企画お題 ＆ ギャラリー (詰め②) =================
+// ================= 10. 企画お題 ＆ ギャラリー =================
 function renderEventTopics() {
   const grid = document.getElementById('eventTopicsGrid');
+  if (!grid) return;
   grid.innerHTML = '';
 
   eventTopics.forEach(e => {
@@ -821,6 +855,7 @@ function viewEventGallery(eid) {
 
 function renderGalleryWorks(entries) {
   const grid = document.getElementById('worksGrid');
+  if (!grid) return;
   grid.innerHTML = '';
 
   entries.forEach(w => {
@@ -841,7 +876,6 @@ function renderGalleryWorks(entries) {
       </div>
     `;
 
-    // 提案① ダブルタップいいね
     let lastTap = 0;
     card.addEventListener('pointerdown', (ev) => {
       const now = Date.now();
@@ -922,7 +956,7 @@ function switchEventTab(tabKey, btn) {
   }
 }
 
-// ================= 11. 最重要項目：独立管理者ダッシュボード＆裏コマンド =================
+// ================= 11. 独立管理者ダッシュボード＆裏コマンド =================
 let keyBuffer = '';
 window.addEventListener('keydown', (e) => {
   if (['INPUT', 'TEXTAREA', 'SELECT'].includes(document.activeElement.tagName)) return;
@@ -964,6 +998,7 @@ function switchAdminTab(panelId, btn) {
 
 function renderAdminAuditLogs() {
   const tbody = document.getElementById('adminAuditTableBody');
+  if (!tbody) return;
   tbody.innerHTML = '';
   adminAuditLogs.forEach((log, idx) => {
     const tr = document.createElement('tr');
@@ -1019,24 +1054,32 @@ function toggleCommunitySafeMode() {
 }
 
 // ユーティリティ
-function openModal(id) { document.getElementById(id).style.display = 'flex'; }
-function closeModal(id) { document.getElementById(id).style.display = 'none'; }
+function openModal(id) {
+  const el = document.getElementById(id);
+  if (el) el.style.display = 'flex';
+}
+function closeModal(id) {
+  const el = document.getElementById(id);
+  if (el) el.style.display = 'none';
+}
 function openDriveLink(folder) {
   showCustomDialog({ icon: '📁', title: 'Google Drive', message: `共有ドライブ [${folder}] フォルダを開きます。` });
 }
 
 // ================= 12. 起動時イニシャライザ =================
 window.onload = () => {
-  // 設定復元
+  // テーマ・アクセント・フォント復元
   const savedTheme = localStorage.getItem('cncm_theme') || 'dark';
-  document.getElementById('themeSettingSelect').value = savedTheme;
+  const themeSel = document.getElementById('themeSettingSelect');
+  if (themeSel) themeSel.value = savedTheme;
   changeColorTheme(savedTheme);
 
   const savedAccent = localStorage.getItem('cncm_accent');
   if (savedAccent) changeAccentColor(savedAccent);
 
   const savedFont = localStorage.getItem('cncm_font') || 'sans-serif';
-  document.getElementById('fontSettingSelect').value = savedFont;
+  const fontSel = document.getElementById('fontSettingSelect');
+  if (fontSel) fontSel.value = savedFont;
   changeFontStyle(savedFont);
 
   // 初期化＆描画
