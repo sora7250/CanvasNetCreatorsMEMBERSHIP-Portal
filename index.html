@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>CanvasNetCreatorMEMBERSHIP</title>
   <style>
-    /* 動的にJSから書き換えるCSSカスタムプロパティ */
+    /* 基本の変数（ユーザー設定で動的に上書き可能） */
     :root {
       --bg-main: #12141a;
       --bg-card: #1c202a;
@@ -15,7 +15,6 @@
       --text-sub: #9ca3af;
       --active-green: #22c55e;
       --font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-      --content-max-width: 1100px;
     }
 
     * {
@@ -23,6 +22,7 @@
       margin: 0;
       padding: 0;
       font-family: var(--font-family);
+      transition: background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease;
     }
 
     body {
@@ -31,14 +31,12 @@
       min-height: 100vh;
       display: flex;
       flex-direction: column;
-      transition: background-color 0.2s, color 0.2s;
     }
 
-    /* ヘッダー */
     header {
       background-color: var(--bg-card);
       border-bottom: 1px solid var(--border);
-      padding: 0.8rem 1.5rem;
+      padding: 1rem 1.5rem;
       display: flex;
       justify-content: space-between;
       align-items: center;
@@ -48,21 +46,35 @@
       font-weight: bold;
       font-size: 1.1rem;
       letter-spacing: 0.5px;
+      color: var(--text);
     }
 
     .header-actions {
       display: flex;
       align-items: center;
       gap: 0.75rem;
+    }
+
+    .icon-btn {
+      background: none;
+      border: 1px solid var(--border);
+      color: var(--text);
+      padding: 0.4rem 0.8rem;
+      border-radius: 6px;
+      cursor: pointer;
       font-size: 0.85rem;
+    }
+
+    .icon-btn:hover {
+      background-color: var(--border);
     }
 
     /* ナビゲーションタブ */
     nav {
       display: flex;
       gap: 0.5rem;
-      padding: 0.6rem 1.5rem;
-      background-color: var(--bg-card);
+      padding: 0.75rem 1.5rem;
+      background-color: rgba(0, 0, 0, 0.15);
       border-bottom: 1px solid var(--border);
       overflow-x: auto;
     }
@@ -76,7 +88,6 @@
       cursor: pointer;
       font-weight: 500;
       white-space: nowrap;
-      transition: all 0.15s;
     }
 
     .tab-btn:hover {
@@ -85,15 +96,15 @@
     }
 
     .tab-btn.active {
-      color: #ffffff;
+      color: #fff;
       background-color: var(--accent);
     }
 
-    /* メインコンテンツ領域 */
+    /* メイン領域 */
     main {
       flex: 1;
       padding: 1.5rem;
-      max-width: var(--content-max-width);
+      max-width: 1100px;
       width: 100%;
       margin: 0 auto;
     }
@@ -106,18 +117,6 @@
       display: block;
     }
 
-    /* レイアウト切り替え用グリッド */
-    .lounge-grid {
-      display: grid;
-      grid-template-columns: 1fr;
-      gap: 1.25rem;
-    }
-
-    .lounge-grid.two-column {
-      grid-template-columns: 1fr 1.5fr;
-    }
-
-    /* カード・コンテナ */
     .card {
       background-color: var(--bg-card);
       border: 1px solid var(--border);
@@ -127,19 +126,15 @@
     }
 
     .card-title {
-      font-size: 1.05rem;
-      margin-bottom: 0.8rem;
+      font-size: 1.1rem;
+      margin-bottom: 0.75rem;
       font-weight: bold;
-      display: flex;
-      align-items: center;
-      gap: 0.5rem;
     }
 
-    /* 自習室リスト */
     .status-badge {
       display: inline-block;
-      width: 9px;
-      height: 9px;
+      width: 10px;
+      height: 10px;
       background-color: var(--active-green);
       border-radius: 50%;
       margin-right: 0.5rem;
@@ -157,7 +152,6 @@
       border-bottom: none;
     }
 
-    /* フォームパーツ */
     input[type="text"], select {
       width: 100%;
       background: var(--bg-main);
@@ -169,32 +163,25 @@
       outline: none;
     }
 
-    button.btn {
-      background-color: var(--border);
-      color: var(--text);
-      border: 1px solid var(--border);
-      padding: 0.5rem 1rem;
+    button.primary-btn {
+      background-color: var(--accent);
+      color: #fff;
+      border: none;
+      padding: 0.6rem 1.2rem;
       border-radius: 6px;
       cursor: pointer;
-      font-weight: 500;
-      transition: opacity 0.15s;
+      font-weight: bold;
     }
 
-    button.btn:hover {
-      opacity: 0.85;
+    button.primary-btn:hover {
+      opacity: 0.9;
     }
 
-    button.btn-primary {
-      background-color: var(--accent);
-      color: #ffffff;
-      border: none;
-    }
-
-    /* カスタマイズ設定モーダル */
+    /* モーダル共通 */
     .modal-overlay {
       position: fixed;
       inset: 0;
-      background: rgba(0, 0, 0, 0.65);
+      background: rgba(0, 0, 0, 0.75);
       display: none;
       align-items: center;
       justify-content: center;
@@ -202,139 +189,174 @@
       padding: 1rem;
     }
 
-    .modal-overlay.open {
-      display: flex;
-    }
-
     .modal {
       background: var(--bg-card);
       border: 1px solid var(--border);
       border-radius: 10px;
-      padding: 1.5rem;
+      padding: 2rem;
       width: 100%;
-      max-width: 520px;
-      max-height: 85vh;
+      max-width: 480px;
+      max-height: 90vh;
       overflow-y: auto;
     }
 
-    .config-group {
-      margin-bottom: 1.25rem;
-      padding-bottom: 1rem;
-      border-bottom: 1px solid var(--border);
+    /* 設定項目のグリッド */
+    .setting-group {
+      margin-bottom: 1.2rem;
+      text-align: left;
     }
 
-    .config-label {
+    .setting-group label {
       display: block;
       font-size: 0.85rem;
       color: var(--text-sub);
-      margin-bottom: 0.5rem;
+      margin-bottom: 0.4rem;
       font-weight: bold;
     }
 
-    .color-pickers {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
+    .color-presets {
+      display: flex;
       gap: 0.5rem;
+      margin-bottom: 0.5rem;
     }
 
-    .color-item {
+    .color-chip {
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      cursor: pointer;
+      border: 2px solid transparent;
+    }
+
+    .color-chip:hover {
+      transform: scale(1.1);
+    }
+
+    /* タブ順序の入れ替えUI */
+    .tab-order-list {
       display: flex;
       flex-direction: column;
-      font-size: 0.75rem;
-      gap: 0.3rem;
-    }
-
-    .color-item input[type="color"] {
-      width: 100%;
-      height: 36px;
-      border: 1px solid var(--border);
-      border-radius: 4px;
-      background: none;
-      cursor: pointer;
+      gap: 0.4rem;
     }
 
     .tab-order-item {
       display: flex;
-      align-items: center;
       justify-content: space-between;
-      background: var(--bg-main);
-      padding: 0.5rem 0.75rem;
-      border-radius: 6px;
-      margin-bottom: 0.4rem;
+      align-items: center;
+      padding: 0.4rem 0.8rem;
+      background-color: var(--bg-main);
+      border: 1px solid var(--border);
+      border-radius: 4px;
       font-size: 0.85rem;
+    }
+
+    .order-btns button {
+      background: none;
+      border: none;
+      color: var(--text);
+      cursor: pointer;
+      padding: 0 0.3rem;
+    }
+
+    /* 管理者画面専用スタイル */
+    .admin-modal {
+      border: 2px solid #ef4444 !important;
     }
   </style>
 </head>
 <body>
 
-  <!-- カスタマイズ設定モーダル -->
-  <div class="modal-overlay" id="customModal">
+  <!-- 匿名登録モーダル -->
+  <div class="modal-overlay" id="loginModal">
+    <div class="modal" style="text-align: center;">
+      <h2 style="margin-bottom: 0.5rem;">CNCMへようこそ</h2>
+      <p style="color: var(--text-sub); font-size: 0.85rem; margin-bottom: 1.5rem;">
+        当コミュニティは完全匿名制です。<br>制作活動用のハンドルネームを決めてください。
+      </p>
+      <input type="text" id="nameInput" placeholder="例：匿名クリエイター01" maxlength="15">
+      <button class="primary-btn" style="width: 100%;" onclick="registerUser()">入場する</button>
+    </div>
+  </div>
+
+  <!-- 環境設定カスタマイズモーダル -->
+  <div class="modal-overlay" id="settingsModal">
     <div class="modal">
-      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.25rem;">
-        <h3 style="font-size:1.1rem;">⚙️ ワークスペース設定</h3>
-        <button class="btn" style="padding:0.2rem 0.6rem;" onclick="toggleModal('customModal')">✕</button>
+      <h3 style="margin-bottom: 1.2rem;">🎨 ワークスペースの環境設定</h3>
+      
+      <!-- テーマ -->
+      <div class="setting-group">
+        <label>カラーテーマ</label>
+        <select id="themeSelect" onchange="applyThemePreset(this.value)">
+          <option value="dark">ダークモード (デフォルト)</option>
+          <option value="light">ライトモード</option>
+          <option value="midnight">ミッドナイトネイビー</option>
+          <option value="terminal">レトロターミナル (黒×緑)</option>
+        </select>
       </div>
 
-      <!-- カラー・テーマ設定 -->
-      <div class="config-group">
-        <label class="config-label">テーマプリセット</label>
-        <div style="display:flex; gap:0.5rem; margin-bottom:1rem;">
-          <button class="btn" onclick="applyPreset('dark')">🌙 ダーク</button>
-          <button class="btn" onclick="applyPreset('light')">☀️ ライト</button>
-          <button class="btn" onclick="applyPreset('cyber')">👾 サイバー</button>
-        </div>
-
-        <label class="config-label">カラー詳細指定</label>
-        <div class="color-pickers">
-          <div class="color-item">
-            <span>背景色</span>
-            <input type="color" id="pickerBg" onchange="updateCustomColors()">
-          </div>
-          <div class="color-item">
-            <span>アクセント色</span>
-            <input type="color" id="pickerAccent" onchange="updateCustomColors()">
-          </div>
-          <div class="color-item">
-            <span>文字色</span>
-            <input type="color" id="pickerText" onchange="updateCustomColors()">
-          </div>
+      <!-- アクセントカラー -->
+      <div class="setting-group">
+        <label>アクセントカラー</label>
+        <div class="color-presets">
+          <div class="color-chip" style="background: #6366f1;" onclick="setAccent('#6366f1')"></div>
+          <div class="color-chip" style="background: #06b6d4;" onclick="setAccent('#06b6d4')"></div>
+          <div class="color-chip" style="background: #10b981;" onclick="setAccent('#10b981')"></div>
+          <div class="color-chip" style="background: #f43f5e;" onclick="setAccent('#f43f5e')"></div>
+          <div class="color-chip" style="background: #f59e0b;" onclick="setAccent('#f59e0b')"></div>
         </div>
       </div>
 
       <!-- フォント設定 -->
-      <div class="config-group">
-        <label class="config-label">フォント</label>
-        <select id="fontSelect" onchange="updateFont(this.value)">
-          <option value='-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif'>システム標準（ゴシック）</option>
-          <option value='"Yu Mincho", "Hiragino Mincho ProN", serif'>明朝体（エディトリアル調）</option>
-          <option value='"SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace'>等幅・モノスペース（制作・開発調）</option>
-          <option value='"Hiragino Maru Gothic ProN", "Kosugi Maru", sans-serif'>丸ゴシック（カジュアル）</option>
+      <div class="setting-group">
+        <label>フォントスタイル</label>
+        <select id="fontSelect" onchange="setFont(this.value)">
+          <option value="sans-serif">ゴシック系・モダン (標準)</option>
+          <option value="serif">明朝系・クラシック</option>
+          <option value="monospace">等幅・コーディング風</option>
         </select>
       </div>
 
-      <!-- レイアウト幅とカラム配置 -->
-      <div class="config-group">
-        <label class="config-label">画面幅 ＆ 配置</label>
-        <div style="display:grid; grid-template-columns:1fr 1fr; gap:0.5rem;">
-          <select id="widthSelect" onchange="updateWidth(this.value)">
-            <option value="900px">標準幅 (900px)</option>
-            <option value="1200px" selected>ワイド (1200px)</option>
-            <option value="100%">フル幅 (100%)</option>
-          </select>
-          <select id="colSelect" onchange="updateColumns(this.value)">
-            <option value="1fr">1カラム（縦並び）</option>
-            <option value="two-column" selected>2カラム（並列）</option>
-          </select>
+      <!-- タブの並び順 -->
+      <div class="setting-group">
+        <label>タブの並び順</label>
+        <div class="tab-order-list" id="tabOrderList">
+          <!-- JSで動的生成 -->
         </div>
       </div>
 
-      <!-- タブ順序の変更 -->
-      <div class="config-group">
-        <label class="config-label">タブの表示順序（上下で入れ替え）</label>
-        <div id="tabOrderList"></div>
+      <div style="display: flex; gap: 0.5rem; margin-top: 1.5rem;">
+        <button class="primary-btn" style="flex: 1;" onclick="saveCustomSettings()">保存して閉じる</button>
+        <button class="icon-btn" onclick="resetSettings()">初期化</button>
       </div>
+    </div>
+  </div>
 
-      <button class="btn btn-primary" style="width:100%;" onclick="resetConfig()">デフォルト設定に戻す</button>
+  <!-- 【管理者専用】隠しコントロールパネル -->
+  <div class="modal-overlay" id="adminModal">
+    <div class="modal admin-modal">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+        <h3 style="color: #ef4444;">🚨 CNCM 管理者コンソール</h3>
+        <button class="icon-btn" onclick="closeAdmin()">✕</button>
+      </div>
+      <div id="adminAuthArea">
+        <p style="font-size: 0.85rem; color: var(--text-sub); margin-bottom: 0.8rem;">
+          管理用シークレットパスコードを入力してください。
+        </p>
+        <input type="password" id="adminPassInput" placeholder="Admin Passcode" style="width: 100%; background: var(--bg-main); border: 1px solid var(--border); padding: 0.6rem; border-radius: 6px; color: var(--text); margin-bottom: 0.8rem;">
+        <button class="primary-btn" style="background: #ef4444; width: 100%;" onclick="verifyAdmin()">ロック解除</button>
+      </div>
+      <div id="adminContentArea" style="display: none;">
+        <p style="font-size: 0.85rem; color: #22c55e; margin-bottom: 1rem;">● 監査モード：正常稼働中</p>
+        <div class="card" style="font-size: 0.85rem;">
+          <strong>緊急通報・自動摘発ログ</strong>
+          <div style="color: var(--text-sub); margin-top: 0.5rem;">現在、重大な規約違反・自動検知フラグはありません。</div>
+        </div>
+        <div class="card" style="font-size: 0.85rem;">
+          <strong>特定ユーザー追放・強制退会 (BAN)</strong>
+          <input type="text" placeholder="追放対象のIDまたはネーム" style="margin-top: 0.5rem;">
+          <button class="primary-btn" style="background: #ef4444;" onclick="alert('対象のセッションを破棄し、アクセスをブロックしました。')">強制追放を実行</button>
+        </div>
+      </div>
     </div>
   </div>
 
@@ -342,266 +364,280 @@
   <header>
     <div class="logo">CanvasNetCreatorMEMBERSHIP</div>
     <div class="header-actions">
-      <span id="displayUser">匿名クリエイター</span>
-      <button class="btn" style="padding:0.35rem 0.7rem;" onclick="toggleModal('customModal')">⚙️ 表示設定</button>
+      <span id="displayUser" style="font-size: 0.9rem; font-weight: bold;">未設定</span>
+      <button class="icon-btn" onclick="openSettings()">⚙️ 設定</button>
+      <button class="icon-btn" onclick="resetUser()">再設定</button>
     </div>
   </header>
 
-  <!-- ナビゲーション（JSで順序を生成） -->
-  <nav id="navBar"></nav>
+  <!-- 動的ナビゲーションタブ -->
+  <nav id="navBar">
+    <!-- JSによってユーザー設定順にレンダリングされます -->
+  </nav>
 
   <!-- メインコンテンツ -->
   <main>
-    <!-- 自習室ラウンジ -->
-    <div id="panel-lounge" class="panel active">
-      <div class="lounge-grid two-column" id="loungeGridContainer">
-        <div>
-          <div class="card">
-            <div class="card-title">作業ステータス</div>
-            <input type="text" id="taskInput" placeholder="現在の作業内容（例：3Dモデリングのテクスチャ調整中）">
-            <button class="btn btn-primary" style="width:100%;" onclick="updateTask()">チェックイン</button>
-          </div>
-        </div>
+    <!-- 自習室タブ -->
+    <div id="lounge" class="panel">
+      <div class="card">
+        <div class="card-title">作業ステータスを更新</div>
+        <input type="text" id="taskInput" placeholder="いま何の作業をしている？（例：動画のカット割り、ドラム打ち込み）">
+        <button class="primary-btn" onclick="updateTask()">自習室にチェックイン</button>
+      </div>
 
-        <div>
-          <div class="card">
-            <div class="card-title">自習室メンバー</div>
-            <div id="memberList">
-              <div class="member-item">
-                <div><span class="status-badge"></span><strong>サウンド職人B</strong></div>
-                <div style="color: var(--text-sub); font-size: 0.85rem;">ベースラインのミックス調整</div>
-              </div>
-              <div class="member-item">
-                <div><span class="status-badge"></span><strong>ペンシル04</strong></div>
-                <div style="color: var(--text-sub); font-size: 0.85rem;">キャラデザ線画作業</div>
-              </div>
-            </div>
+      <div class="card">
+        <div class="card-title">作業中のメンバー</div>
+        <div id="memberList">
+          <div class="member-item">
+            <div><span class="status-badge"></span><strong>サウンド職人B</strong></div>
+            <div style="color: var(--text-sub); font-size: 0.85rem;">BGMトラックのミキシング中</div>
+          </div>
+          <div class="member-item">
+            <div><span class="status-badge"></span><strong>ペンシル04</strong></div>
+            <div style="color: var(--text-sub); font-size: 0.85rem;">新キービジュアルのラフ描き</div>
           </div>
         </div>
       </div>
     </div>
 
-    <!-- 相談・Q&A掲示板 -->
-    <div id="panel-forum" class="panel">
+    <!-- 掲示板タブ -->
+    <div id="forum" class="panel">
       <div class="card">
-        <div class="card-title">💬 相談・Q&A（マサカリ禁止・称賛ファースト）</div>
+        <div class="card-title">💬 相談・壁打ち・意見募集</div>
         <p style="color: var(--text-sub); font-size: 0.9rem; margin-bottom: 1rem;">
-          技術的な質問や未完成のアイデアを自由に投げて意見をもらおう。
+          「マサカリ禁止・称賛ファースト」がルールです。作りかけの作品やプラグインの相談もお気軽に！
         </p>
-        <button class="btn btn-primary">＋ 新しいスレッドを立てる</button>
+        <button class="primary-btn">＋ 新しい相談トピックを立てる</button>
       </div>
     </div>
 
-    <!-- 素材ドライブ -->
-    <div id="panel-drive" class="panel">
+    <!-- ドライブタブ -->
+    <div id="drive" class="panel">
       <div class="card">
-        <div class="card-title">📁 Google Drive 素材共有ライブラリ</div>
+        <div class="card-title">📁 フリー素材・プロジェクト共有ドライブ</div>
         <p style="color: var(--text-sub); font-size: 0.9rem; margin-bottom: 1rem;">
-          メンバー共用のプリセット・フリー音源・テクスチャ置き場です。
+          Google Driveの共有フォルダに連携。効果音、テクスチャ、プリセット等を自由利用できます。
         </p>
-        <button class="btn btn-primary" onclick="alert('Google Drive共有フォルダへ遷移します')">Driveフォルダを開く</button>
+        <button class="primary-btn" onclick="alert('Google Drive共有リンクへ遷移します')">Google Driveを開く</button>
       </div>
     </div>
 
-    <!-- 企画・イベント -->
-    <div id="panel-event" class="panel">
+    <!-- イベントタブ -->
+    <div id="event" class="panel">
       <div class="card">
-        <div class="card-title">🏆 企画・ランキング・お題募集</div>
+        <div class="card-title">🏆 企画・お題チャレンジ</div>
         <p style="color: var(--text-sub); font-size: 0.9rem; margin-bottom: 1rem;">
-          定期コンペやお題制作の投票会場です。
+          定期開催のワンアワー制作会や、お題作品の投稿・いいねランキングのエリアです。
         </p>
-        <button class="btn btn-primary">現在のお題を見る</button>
+        <button class="primary-btn">作品をエントリーする</button>
       </div>
     </div>
   </main>
 
   <script>
-    // デフォルトの設定データ
-    const defaultConfig = {
-      theme: 'dark',
-      bgMain: '#12141a',
-      bgCard: '#1c202a',
-      accent: '#6366f1',
-      text: '#f3f4f6',
-      font: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
-      maxWidth: '1200px',
-      columns: 'two-column',
-      tabs: [
-        { id: 'lounge', label: '🏠 自習室' },
-        { id: 'forum', label: '💬 相談・Q&A' },
-        { id: 'drive', label: '📁 素材ドライブ' },
-        { id: 'event', label: '🏆 企画・お題' }
-      ]
+    // --- 1. タブ定義とデフォルト順序 ---
+    const defaultTabs = [
+      { id: 'lounge', name: '🏠 自習室ラウンジ' },
+      { id: 'forum', name: '💬 相談・Q&A' },
+      { id: 'drive', name: '📁 素材ドライブ' },
+      { id: 'event', name: '🏆 企画・お題' }
+    ];
+    let currentTabOrder = JSON.parse(localStorage.getItem('cncm_tab_order')) || defaultTabs;
+
+    // --- 2. テーマ・フォント設定 ---
+    const themes = {
+      dark: { bg: '#12141a', card: '#1c202a', border: '#2a3142', text: '#f3f4f6' },
+      light: { bg: '#f8fafc', card: '#ffffff', border: '#e2e8f0', text: '#0f172a' },
+      midnight: { bg: '#0b0f19', card: '#111827', border: '#1f2937', text: '#e5e7eb' },
+      terminal: { bg: '#0d1117', card: '#161b22', border: '#30363d', text: '#58a6ff' }
     };
 
-    let userConfig = JSON.parse(localStorage.getItem('cncm_config')) || defaultConfig;
-    let activeTabId = userConfig.tabs[0].id;
-
-    // 初期化
-    window.onload = () => {
-      applyConfigToUI();
-      renderTabs();
-      renderTabOrderList();
-    };
-
-    // モーダル開閉
-    function toggleModal(id) {
-      const modal = document.getElementById(id);
-      modal.classList.toggle('open');
-      if (modal.classList.contains('open')) {
-        syncPickers();
-      }
+    function applyThemePreset(presetKey) {
+      const theme = themes[presetKey];
+      if (!theme) return;
+      document.documentElement.style.setProperty('--bg-main', theme.bg);
+      document.documentElement.style.setProperty('--bg-card', theme.card);
+      document.documentElement.style.setProperty('--border', theme.border);
+      document.documentElement.style.setProperty('--text', theme.text);
+      localStorage.setItem('cncm_theme', presetKey);
     }
 
-    // 設定を画面全体（CSS変数・レイアウト）に反映
-    function applyConfigToUI() {
-      const r = document.documentElement.style;
-      r.setProperty('--bg-main', userConfig.bgMain);
-      r.setProperty('--bg-card', userConfig.bgCard);
-      r.setProperty('--accent', userConfig.accent);
-      r.setProperty('--text', userConfig.text);
-      r.setProperty('--font-family', userConfig.font);
-      r.setProperty('--content-max-width', userConfig.maxWidth);
-
-      // カラム配置
-      const grid = document.getElementById('loungeGridContainer');
-      if (grid) {
-        grid.className = `lounge-grid ${userConfig.columns === 'two-column' ? 'two-column' : ''}`;
-      }
-
-      // ドロップダウン類の状態合わせ
-      document.getElementById('fontSelect').value = userConfig.font;
-      document.getElementById('widthSelect').value = userConfig.maxWidth;
-      document.getElementById('colSelect').value = userConfig.columns;
+    function setAccent(color) {
+      document.documentElement.style.setProperty('--accent', color);
+      localStorage.setItem('cncm_accent', color);
     }
 
-    function saveConfig() {
-      localStorage.setItem('cncm_config', JSON.stringify(userConfig));
-      applyConfigToUI();
+    function setFont(fontKey) {
+      let fontStack = '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
+      if (fontKey === 'serif') fontStack = '"Yu Mincho", "Hiragino Mincho ProN", serif';
+      if (fontKey === 'monospace') fontStack = '"Fira Code", "Consolas", monospace';
+      document.documentElement.style.setProperty('--font-family', fontStack);
+      localStorage.setItem('cncm_font', fontKey);
     }
 
-    // プリセット適用
-    function applyPreset(type) {
-      if (type === 'dark') {
-        userConfig.bgMain = '#12141a';
-        userConfig.bgCard = '#1c202a';
-        userConfig.accent = '#6366f1';
-        userConfig.text = '#f3f4f6';
-      } else if (type === 'light') {
-        userConfig.bgMain = '#f8fafc';
-        userConfig.bgCard = '#ffffff';
-        userConfig.accent = '#4f46e5';
-        userConfig.text = '#0f172a';
-      } else if (type === 'cyber') {
-        userConfig.bgMain = '#090d16';
-        userConfig.bgCard = '#111827';
-        userConfig.accent = '#06b6d4';
-        userConfig.text = '#a5f3fc';
-      }
-      syncPickers();
-      saveConfig();
-    }
-
-    function syncPickers() {
-      document.getElementById('pickerBg').value = rgbToHex(userConfig.bgMain);
-      document.getElementById('pickerAccent').value = rgbToHex(userConfig.accent);
-      document.getElementById('pickerText').value = rgbToHex(userConfig.text);
-    }
-
-    function rgbToHex(color) {
-      if (color.startsWith('#')) return color;
-      return '#12141a';
-    }
-
-    // 各個別設定の更新
-    function updateCustomColors() {
-      userConfig.bgMain = document.getElementById('pickerBg').value;
-      userConfig.accent = document.getElementById('pickerAccent').value;
-      userConfig.text = document.getElementById('pickerText').value;
-      userConfig.bgCard = userConfig.bgMain === '#f8fafc' ? '#ffffff' : adjustBrightness(userConfig.bgMain, 15);
-      saveConfig();
-    }
-
-    function updateFont(val) { userConfig.font = val; saveConfig(); }
-    function updateWidth(val) { userConfig.maxWidth = val; saveConfig(); }
-    function updateColumns(val) { userConfig.columns = val; saveConfig(); }
-
-    // ナビゲーションタブの動的描画
+    // --- 3. タブの描画と並び替え ---
     function renderTabs() {
       const nav = document.getElementById('navBar');
       nav.innerHTML = '';
-      userConfig.tabs.forEach(tab => {
+      currentTabOrder.forEach((tab, index) => {
         const btn = document.createElement('button');
-        btn.className = `tab-btn ${tab.id === activeTabId ? 'active' : ''}`;
-        btn.innerText = tab.label;
-        btn.onclick = () => switchTab(tab.id);
+        btn.className = `tab-btn ${index === 0 ? 'active' : ''}`;
+        btn.innerText = tab.name;
+        btn.onclick = (e) => switchTab(tab.id, e.target);
         nav.appendChild(btn);
       });
+      // 最初のパネルを表示
+      if (currentTabOrder.length > 0) {
+        showPanel(currentTabOrder[0].id);
+      }
+      renderTabOrderConfig();
     }
 
-    function switchTab(tabId) {
-      activeTabId = tabId;
+    function switchTab(tabId, targetBtn) {
+      document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+      targetBtn.classList.add('active');
+      showPanel(tabId);
+    }
+
+    function showPanel(tabId) {
       document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
-      const target = document.getElementById(`panel-${tabId}`);
-      if (target) target.classList.add('active');
-      renderTabs();
+      const activePanel = document.getElementById(tabId);
+      if (activePanel) activePanel.classList.add('active');
     }
 
-    // タブ並び替えリストの描画
-    function renderTabOrderList() {
-      const container = document.getElementById('tabOrderList');
-      container.innerHTML = '';
-      userConfig.tabs.forEach((tab, index) => {
-        const div = document.createElement('div');
-        div.className = 'tab-order-item';
-        div.innerHTML = `
-          <span>${tab.label}</span>
-          <div>
-            <button class="btn" style="padding:0.2rem 0.5rem;" onclick="moveTab(${index}, -1)" ${index === 0 ? 'disabled' : ''}>▲</button>
-            <button class="btn" style="padding:0.2rem 0.5rem;" onclick="moveTab(${index}, 1)" ${index === userConfig.tabs.length - 1 ? 'disabled' : ''}>▼</button>
+    function renderTabOrderConfig() {
+      const list = document.getElementById('tabOrderList');
+      list.innerHTML = '';
+      currentTabOrder.forEach((tab, i) => {
+        const item = document.createElement('div');
+        item.className = 'tab-order-item';
+        item.innerHTML = `
+          <span>${tab.name}</span>
+          <div class="order-btns">
+            ${i > 0 ? `<button onclick="moveTab(${i}, -1)">▲</button>` : ''}
+            ${i < currentTabOrder.length - 1 ? `<button onclick="moveTab(${i}, 1)">▼</button>` : ''}
           </div>
         `;
-        container.appendChild(div);
+        list.appendChild(item);
       });
     }
 
     function moveTab(index, direction) {
-      const target = index + direction;
-      const temp = userConfig.tabs[index];
-      userConfig.tabs[index] = userConfig.tabs[target];
-      userConfig.tabs[target] = temp;
-      saveConfig();
+      const targetIndex = index + direction;
+      const temp = currentTabOrder[index];
+      currentTabOrder[index] = currentTabOrder[targetIndex];
+      currentTabOrder[targetIndex] = temp;
+      localStorage.setItem('cncm_tab_order', JSON.stringify(currentTabOrder));
       renderTabs();
-      renderTabOrderList();
     }
 
-    function resetConfig() {
-      userConfig = JSON.parse(JSON.stringify(defaultConfig));
-      saveConfig();
-      renderTabs();
-      renderTabOrderList();
-      syncPickers();
+    // --- 4. モーダル管理 ---
+    function openSettings() {
+      document.getElementById('settingsModal').style.display = 'flex';
+    }
+    function saveCustomSettings() {
+      document.getElementById('settingsModal').style.display = 'none';
+    }
+    function resetSettings() {
+      localStorage.removeItem('cncm_theme');
+      localStorage.removeItem('cncm_accent');
+      localStorage.removeItem('cncm_font');
+      localStorage.removeItem('cncm_tab_order');
+      location.reload();
     }
 
-    function adjustBrightness(hex, percent) {
-      let num = parseInt(hex.replace("#",""), 16),
-          amt = Math.round(2.55 * percent),
-          R = (num >> 16) + amt,
-          G = (num >> 8 & 0x00FF) + amt,
-          B = (num & 0x0000FF) + amt;
-      return "#" + (0x1000000 + (R<255?R<1?0:R:255)*0x10000 + (G<255?G<1?0:G:255)*0x100 + (B<255?B<1?0:B:255)).toString(16).slice(1);
+    // 匿名ネーム管理
+    function registerUser() {
+      const name = document.getElementById('nameInput').value.trim();
+      if (!name) return alert('名前を入力してください');
+      localStorage.setItem('cncm_username', name);
+      document.getElementById('displayUser').innerText = name;
+      document.getElementById('loginModal').style.display = 'none';
     }
 
+    function resetUser() {
+      localStorage.removeItem('cncm_username');
+      document.getElementById('loginModal').style.display = 'flex';
+    }
+
+    // --- 5. 【管理者専用】裏コマンド検知システム ---
+    // キーボードで "admin" と連続入力すると管理者モーダルが開く
+    let keyBuffer = '';
+    const secretCode = 'admin';
+
+    window.addEventListener('keydown', (e) => {
+      // 入力フォームにフォーカスしている時は無視
+      if (['INPUT', 'SELECT', 'TEXTAREA'].includes(document.activeElement.tagName)) return;
+      
+      keyBuffer += e.key.toLowerCase();
+      if (keyBuffer.length > secretCode.length) {
+        keyBuffer = keyBuffer.slice(-secretCode.length);
+      }
+      if (keyBuffer === secretCode) {
+        openAdmin();
+        keyBuffer = '';
+      }
+    });
+
+    function openAdmin() {
+      document.getElementById('adminModal').style.display = 'flex';
+    }
+    function closeAdmin() {
+      document.getElementById('adminModal').style.display = 'none';
+      document.getElementById('adminAuthArea').style.display = 'block';
+      document.getElementById('adminContentArea').style.display = 'none';
+      document.getElementById('adminPassInput').value = '';
+    }
+    function verifyAdmin() {
+      const pass = document.getElementById('adminPassInput').value;
+      if (pass === 'canvas2026') {
+        document.getElementById('adminAuthArea').style.display = 'none';
+        document.getElementById('adminContentArea').style.display = 'block';
+      } else {
+        alert('無効な管理者パスコードです。');
+      }
+    }
+
+    // 自習室タスク更新
     function updateTask() {
       const task = document.getElementById('taskInput').value.trim();
+      const user = localStorage.getItem('cncm_username') || '匿名';
       if (!task) return;
+
       const list = document.getElementById('memberList');
       const item = document.createElement('div');
       item.className = 'member-item';
-      item.innerHTML = `<div><span class="status-badge"></span><strong>あなた</strong></div><div style="color: var(--text-sub); font-size: 0.85rem;">${task}</div>`;
+      item.innerHTML = `<div><span class="status-badge"></span><strong>${user}</strong></div><div style="color: var(--text-sub); font-size: 0.85rem;">${task}</div>`;
       list.prepend(item);
       document.getElementById('taskInput').value = '';
     }
+
+    // 起動時初期化
+    window.onload = () => {
+      // ユーザー確認
+      const savedUser = localStorage.getItem('cncm_username');
+      if (savedUser) {
+        document.getElementById('displayUser').innerText = savedUser;
+        document.getElementById('loginModal').style.display = 'none';
+      } else {
+        document.getElementById('loginModal').style.display = 'flex';
+      }
+
+      // テーマ復元
+      const savedTheme = localStorage.getItem('cncm_theme') || 'dark';
+      document.getElementById('themeSelect').value = savedTheme;
+      applyThemePreset(savedTheme);
+
+      const savedAccent = localStorage.getItem('cncm_accent');
+      if (savedAccent) setAccent(savedAccent);
+
+      const savedFont = localStorage.getItem('cncm_font') || 'sans-serif';
+      document.getElementById('fontSelect').value = savedFont;
+      setFont(savedFont);
+
+      // タブ描画
+      renderTabs();
+    };
   </script>
 </body>
 </html>
