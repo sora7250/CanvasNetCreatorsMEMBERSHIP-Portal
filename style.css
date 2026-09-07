@@ -32,7 +32,6 @@ html, body {
   font-size: 14px;
 }
 
-/* アプリ全体ルート */
 .app-root-view {
   width: 100%;
   height: 100%;
@@ -40,7 +39,6 @@ html, body {
   flex-direction: column;
 }
 
-/* ヘッダー */
 .app-header {
   background-color: var(--bg-card);
   border-bottom: 1px solid var(--border);
@@ -100,7 +98,6 @@ html, body {
   object-fit: cover;
 }
 
-/* 緊急バナー */
 .emergency-alert-banner {
   background-color: #ef4444;
   color: #ffffff;
@@ -113,7 +110,6 @@ html, body {
   flex-shrink: 0;
 }
 
-/* メインタブバー */
 .main-tab-bar {
   background-color: var(--bg-sub);
   border-bottom: 1px solid var(--border);
@@ -148,7 +144,6 @@ html, body {
   color: #fff;
 }
 
-/* サブタブバー */
 .sub-tab-bar {
   background-color: rgba(0, 0, 0, 0.25);
   border-bottom: 1px solid var(--border);
@@ -182,10 +177,9 @@ html, body {
   font-weight: bold;
 }
 
-/* メインビューポート（高さ潰れを完全修正） */
 .main-viewport {
   flex: 1;
-  min-height: 0; /* これが重要：子要素のflexを潰さない */
+  min-height: 0;
   width: 100%;
   position: relative;
   display: flex;
@@ -226,7 +220,6 @@ html, body {
   -webkit-overflow-scrolling: touch;
 }
 
-/* カード */
 .card {
   background-color: var(--bg-card);
   border: 1px solid var(--border);
@@ -317,7 +310,6 @@ html, body {
 .btn-outline { background: none; border: 1px solid var(--border); color: var(--text); }
 .btn-outline:hover { background-color: var(--border); }
 .btn-small { padding: 0.25rem 0.55rem; font-size: 0.75rem; }
-.btn-google { background: #ea4335; color: #fff; width: 100%; }
 
 .icon-action-btn {
   background: none;
@@ -329,7 +321,6 @@ html, body {
   cursor: pointer;
 }
 
-/* ポート・在席テーブル */
 .member-table-wrapper {
   background: var(--bg-main);
   border: 1px solid var(--border);
@@ -371,7 +362,6 @@ html, body {
 .dot-work { background-color: var(--status-work); }
 .dot-rest { background-color: var(--status-rest); }
 
-/* チャット */
 .chat-viewport {
   display: flex;
   flex-direction: column;
@@ -492,7 +482,6 @@ html, body {
   width: 90%;
 }
 
-/* グループ */
 .group-control-bar { padding: 0.6rem 1rem 0; background: var(--bg-main); flex-shrink: 0; }
 .search-box-row { display: flex; gap: 0.5rem; margin-bottom: 0.4rem; }
 .view-switch-toggle { display: flex; border: 1px solid var(--border); border-radius: 6px; overflow: hidden; }
@@ -511,7 +500,6 @@ html, body {
 .group-tags-wrap { display: flex; flex-wrap: wrap; gap: 0.3rem; }
 .group-tag-label { font-size: 0.68rem; background: rgba(99, 102, 241, 0.15); color: var(--accent); padding: 0.1rem 0.35rem; border-radius: 4px; }
 
-/* フォーラム */
 .forum-split-layout { display: grid; grid-template-columns: 320px 1fr; width: 100%; height: 100%; min-height: 0; flex: 1; }
 @media (max-width: 800px) { .forum-split-layout { grid-template-columns: 1fr; } }
 .forum-sidebar { border-right: 1px solid var(--border); background: var(--bg-sub); display: flex; flex-direction: column; min-height: 0; }
@@ -525,11 +513,10 @@ html, body {
 .thread-preview-card:hover { background-color: rgba(99, 102, 241, 0.08); }
 .thread-preview-card.active { background-color: var(--bg-card); border-left: 3px solid var(--accent); }
 .forum-main-content { flex: 1; min-height: 0; overflow-y: auto; padding: 1.2rem; display: flex; flex-direction: column; background: var(--bg-main); }
-.empty-state-notice { margin: auto; color: var(--text-sub); font-size: 0.9rem; }
+.empty-state-notice { margin: auto; color: var(--text-sub); font-size: 0.85rem; text-align: center; padding: 1.5rem 0; }
 .drive-media-frame { width: 100%; aspect-ratio: 16 / 9; background: #000; border: 1px solid var(--border); border-radius: 6px; overflow: hidden; margin: 0.8rem 0; }
 .drive-media-frame iframe { width: 100%; height: 100%; border: none; }
 
-/* 企画お題 */
 .event-view-section { display: none; flex-direction: column; flex: 1; min-height: 0; }
 .event-view-section.active { display: flex; }
 .topic-cards-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 1rem; }
@@ -539,13 +526,11 @@ html, body {
 .work-media-preview { width: 100%; aspect-ratio: 16 / 9; background: #000; position: relative; }
 .work-media-preview iframe { width: 100%; height: 100%; border: none; }
 
-/* ドライブ */
 .drive-shortcuts-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 0.8rem; }
 .drive-folder-card { background: var(--bg-main); border: 1px solid var(--border); border-radius: 8px; padding: 1rem; display: flex; flex-direction: column; align-items: center; text-align: center; cursor: pointer; }
 .drive-folder-card:hover { border-color: var(--accent); transform: translateY(-2px); }
 .drive-folder-card .folder-icon { font-size: 2rem; margin-bottom: 0.4rem; }
 
-/* 独立管理者画面 */
 .admin-full-view { width: 100%; height: 100%; height: 100dvh; display: flex; background: #090b10; color: #f3f4f6; z-index: 1000; position: fixed; inset: 0; }
 .admin-sidebar { width: 260px; background: #11141c; border-right: 1px solid #2a3142; display: flex; flex-direction: column; flex-shrink: 0; }
 .admin-brand { padding: 1.2rem; border-bottom: 1px solid #2a3142; display: flex; align-items: center; gap: 0.5rem; }
@@ -563,7 +548,6 @@ html, body {
 .admin-table { width: 100%; border-collapse: collapse; font-size: 0.8rem; }
 .admin-table th, .admin-table td { padding: 0.65rem 0.8rem; border-bottom: 1px solid #2a3142; text-align: left; }
 
-/* 独自ダイアログ */
 .custom-modal-backdrop { position: fixed; inset: 0; background: rgba(0, 0, 0, 0.75); display: none; align-items: center; justify-content: center; z-index: 2000; padding: 1rem; }
 .custom-dialog-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: 12px; padding: 1.5rem; width: 100%; max-width: 360px; text-align: center; }
 .dialog-icon { font-size: 2.2rem; margin-bottom: 0.5rem; }
@@ -571,7 +555,6 @@ html, body {
 .dialog-message { font-size: 0.82rem; color: var(--text-sub); margin-bottom: 1.2rem; }
 .dialog-actions { display: flex; gap: 0.5rem; justify-content: center; }
 
-/* 汎用モーダル */
 .modal-backdrop { position: fixed; inset: 0; background: rgba(0, 0, 0, 0.75); display: none; align-items: center; justify-content: center; z-index: 1500; padding: 1rem; }
 .modal-sheet { background: var(--bg-card); border: 1px solid var(--border); border-radius: 10px; padding: 1.2rem; width: 100%; max-width: 460px; max-height: 90vh; display: flex; flex-direction: column; }
 .modal-sheet-lg { max-width: 680px; }
