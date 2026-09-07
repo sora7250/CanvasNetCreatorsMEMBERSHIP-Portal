@@ -4,8 +4,12 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>CanvasNetCreatorMEMBERSHIP</title>
+  
+  <!-- Firebase SDK (Google認証用) -->
+  <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-auth-compat.js"></script>
+
   <style>
-    /* 基本の変数（ユーザー設定で動的に上書き可能） */
     :root {
       --bg-main: #12141a;
       --bg-card: #1c202a;
@@ -13,7 +17,10 @@
       --accent: #6366f1;
       --text: #f3f4f6;
       --text-sub: #9ca3af;
-      --active-green: #22c55e;
+      --status-ok: #22c55e;
+      --status-busy: #ef4444;
+      --status-work: #f59e0b;
+      --status-rest: #3b82f6;
       --font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
     }
 
@@ -36,7 +43,7 @@
     header {
       background-color: var(--bg-card);
       border-bottom: 1px solid var(--border);
-      padding: 1rem 1.5rem;
+      padding: 0.8rem 1.5rem;
       display: flex;
       justify-content: space-between;
       align-items: center;
@@ -44,15 +51,27 @@
 
     .logo {
       font-weight: bold;
-      font-size: 1.1rem;
+      font-size: 1.05rem;
       letter-spacing: 0.5px;
-      color: var(--text);
     }
 
     .header-actions {
       display: flex;
       align-items: center;
       gap: 0.75rem;
+    }
+
+    .avatar-icon {
+      width: 34px;
+      height: 34px;
+      border-radius: 50%;
+      background: var(--border);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.1rem;
+      overflow: hidden;
+      border: 1px solid var(--border);
     }
 
     .icon-btn {
@@ -69,7 +88,6 @@
       background-color: var(--border);
     }
 
-    /* ナビゲーションタブ */
     nav {
       display: flex;
       gap: 0.5rem;
@@ -100,7 +118,6 @@
       background-color: var(--accent);
     }
 
-    /* メイン領域 */
     main {
       flex: 1;
       padding: 1.5rem;
@@ -131,28 +148,50 @@
       font-weight: bold;
     }
 
-    .status-badge {
-      display: inline-block;
-      width: 10px;
-      height: 10px;
-      background-color: var(--active-green);
-      border-radius: 50%;
-      margin-right: 0.5rem;
+    /* メンバーカードとステータス表示 */
+    .member-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 1rem;
     }
 
-    .member-item {
+    .member-card {
+      background-color: var(--bg-main);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 1rem;
+      cursor: pointer;
       display: flex;
       align-items: center;
-      justify-content: space-between;
-      padding: 0.75rem 0;
-      border-bottom: 1px solid var(--border);
+      gap: 0.8rem;
+      position: relative;
     }
 
-    .member-item:last-child {
-      border-bottom: none;
+    .member-card:hover {
+      border-color: var(--accent);
+      transform: translateY(-2px);
     }
 
-    input[type="text"], select {
+    .status-dot {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      display: inline-block;
+      position: absolute;
+      bottom: 12px;
+      left: 36px;
+      border: 2px solid var(--bg-main);
+    }
+
+    .dot-ok { background-color: var(--status-ok); }
+    .dot-busy { background-color: var(--status-busy); }
+    .dot-work { background-color: var(--status-work); }
+    .dot-rest { background-color: var(--status-rest); }
+
+    .tag-busy { color: var(--status-busy); }
+    .tag-ok { color: var(--status-ok); }
+
+    input[type="text"], input[type="password"], select {
       width: 100%;
       background: var(--bg-main);
       border: 1px solid var(--border);
@@ -193,72 +232,78 @@
       background: var(--bg-card);
       border: 1px solid var(--border);
       border-radius: 10px;
-      padding: 2rem;
+      padding: 1.8rem;
       width: 100%;
-      max-width: 480px;
+      max-width: 460px;
       max-height: 90vh;
       overflow-y: auto;
     }
 
-    /* 設定項目のグリッド */
-    .setting-group {
-      margin-bottom: 1.2rem;
-      text-align: left;
-    }
-
-    .setting-group label {
-      display: block;
-      font-size: 0.85rem;
-      color: var(--text-sub);
-      margin-bottom: 0.4rem;
-      font-weight: bold;
-    }
-
-    .color-presets {
+    .avatar-selector {
       display: flex;
       gap: 0.5rem;
-      margin-bottom: 0.5rem;
+      margin-bottom: 1rem;
+      justify-content: center;
     }
 
-    .color-chip {
-      width: 28px;
-      height: 28px;
-      border-radius: 50%;
-      cursor: pointer;
+    .avatar-opt {
+      font-size: 1.5rem;
+      padding: 0.4rem;
       border: 2px solid transparent;
+      border-radius: 8px;
+      cursor: pointer;
+      background: var(--bg-main);
     }
 
-    .color-chip:hover {
-      transform: scale(1.1);
+    .avatar-opt.selected {
+      border-color: var(--accent);
     }
 
-    /* タブ順序の入れ替えUI */
-    .tab-order-list {
-      display: flex;
-      flex-direction: column;
-      gap: 0.4rem;
-    }
-
-    .tab-order-item {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      padding: 0.4rem 0.8rem;
+    /* 1対1チャットウィンドウ */
+    .chat-box {
+      height: 260px;
+      overflow-y: auto;
       background-color: var(--bg-main);
       border: 1px solid var(--border);
-      border-radius: 4px;
+      border-radius: 6px;
+      padding: 0.8rem;
+      margin-bottom: 0.8rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.6rem;
+    }
+
+    .chat-bubble {
+      max-width: 80%;
+      padding: 0.5rem 0.8rem;
+      border-radius: 8px;
       font-size: 0.85rem;
+      line-height: 1.4;
+      word-break: break-all;
     }
 
-    .order-btns button {
-      background: none;
-      border: none;
+    .chat-bubble.mine {
+      align-self: flex-end;
+      background-color: var(--accent);
+      color: #fff;
+    }
+
+    .chat-bubble.other {
+      align-self: flex-start;
+      background-color: var(--border);
       color: var(--text);
-      cursor: pointer;
-      padding: 0 0.3rem;
     }
 
-    /* 管理者画面専用スタイル */
+    .chat-bubble.system-alert {
+      align-self: center;
+      background-color: rgba(239, 68, 68, 0.2);
+      border: 1px solid #ef4444;
+      color: #fca5a5;
+      font-size: 0.75rem;
+      text-align: center;
+    }
+
+    /* 管理者 */
     .admin-modal {
       border: 2px solid #ef4444 !important;
     }
@@ -266,72 +311,121 @@
 </head>
 <body>
 
-  <!-- 匿名登録モーダル -->
+  <!-- 1. Google認証 & 初期設定モーダル -->
   <div class="modal-overlay" id="loginModal">
     <div class="modal" style="text-align: center;">
-      <h2 style="margin-bottom: 0.5rem;">CNCMへようこそ</h2>
-      <p style="color: var(--text-sub); font-size: 0.85rem; margin-bottom: 1.5rem;">
-        当コミュニティは完全匿名制です。<br>制作活動用のハンドルネームを決めてください。
+      <h2 style="margin-bottom: 0.5rem;">CNCM ログイン</h2>
+      <p style="color: var(--text-sub); font-size: 0.85rem; margin-bottom: 1.2rem;">
+        安全のためGoogleアカウントで認証します。<br>※本名やメールアドレスは一切公開されません。
       </p>
-      <input type="text" id="nameInput" placeholder="例：匿名クリエイター01" maxlength="15">
-      <button class="primary-btn" style="width: 100%;" onclick="registerUser()">入場する</button>
+
+      <button class="primary-btn" style="width: 100%; margin-bottom: 1.5rem; background: #ea4335;" onclick="mockGoogleAuth()">
+        🔴 Googleアカウントで認証する
+      </button>
+
+      <div id="profileSetupArea" style="display: none; text-align: left; border-top: 1px solid var(--border); padding-top: 1rem;">
+        <label style="font-size: 0.85rem; color: var(--text-sub); font-weight: bold;">匿名ハンドルネーム</label>
+        <input type="text" id="nameInput" placeholder="例：匿名クリエイター01" maxlength="15">
+
+        <label style="font-size: 0.85rem; color: var(--text-sub); font-weight: bold;">アバターを選択</label>
+        <div class="avatar-selector">
+          <div class="avatar-opt selected" onclick="pickAvatar('🎨')">🎨</div>
+          <div class="avatar-opt" onclick="pickAvatar('🎧')">🎧</div>
+          <div class="avatar-opt" onclick="pickAvatar('🎬')">🎬</div>
+          <div class="avatar-opt" onclick="pickAvatar('💻')">💻</div>
+          <div class="avatar-opt" onclick="pickAvatar('🖋️')">🖋️</div>
+        </div>
+
+        <button class="primary-btn" style="width: 100%;" onclick="completeRegistration()">コミュニティへ入場</button>
+      </div>
     </div>
   </div>
 
-  <!-- 環境設定カスタマイズモーダル -->
+  <!-- 2. 話しかけ確認ポップアップ -->
+  <div class="modal-overlay" id="talkConfirmModal">
+    <div class="modal" style="text-align: center;">
+      <div id="targetAvatarDisplay" style="font-size: 2.5rem; margin-bottom: 0.5rem;">🎨</div>
+      <h3 id="targetNameDisplay" style="margin-bottom: 0.4rem;">クリエイター名</h3>
+      <p id="targetStatusDisplay" style="font-size: 0.85rem; color: var(--text-sub); margin-bottom: 1.2rem;">作業中</p>
+
+      <div id="busyWarning" style="display: none; background: rgba(239, 68, 68, 0.2); border: 1px solid #ef4444; color: #fca5a5; padding: 0.6rem; border-radius: 6px; font-size: 0.8rem; margin-bottom: 1rem;">
+        ⚠️ このメンバーは現在「一人にしてください」モードです。
+      </div>
+
+      <div style="display: flex; gap: 0.5rem;">
+        <button class="primary-btn" id="sendTalkBtn" style="flex: 1;" onclick="requestTalk()">話しかける</button>
+        <button class="icon-btn" style="flex: 1;" onclick="closeModal('talkConfirmModal')">また後で</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 3. 話しかけ承認リクエスト（受信側ポップアップ） -->
+  <div class="modal-overlay" id="incomingTalkModal">
+    <div class="modal" style="text-align: center;">
+      <div style="font-size: 2rem; margin-bottom: 0.5rem;">💬</div>
+      <h3 id="incomingRequesterName">クリエイター</h3>
+      <p style="font-size: 0.85rem; color: var(--text-sub); margin-bottom: 1.2rem;">
+        あなたに話しかけたがっています。チャットを開始しますか？
+      </p>
+      <div style="display: flex; gap: 0.5rem;">
+        <button class="primary-btn" style="flex: 1;" onclick="acceptTalk()">承認して話す</button>
+        <button class="icon-btn" style="flex: 1;" onclick="rejectTalk()">また後で</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 4. 1対1 完全秘匿チャット画面 -->
+  <div class="modal-overlay" id="privateChatModal">
+    <div class="modal" style="max-width: 520px;">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.8rem;">
+        <div style="display: flex; align-items: center; gap: 0.5rem;">
+          <span id="chatWithAvatar" style="font-size: 1.2rem;">🎨</span>
+          <strong id="chatWithName">相手のネーム</strong>
+        </div>
+        <button class="icon-btn" onclick="closeChat()">退出</button>
+      </div>
+      
+      <div class="chat-box" id="chatBox">
+        <div class="chat-bubble system-alert">
+          🛡️ このチャットは第三者や運営からは見えません。<br>個人情報の詮索・禁止ワードはシステムで強制検閲されます。
+        </div>
+      </div>
+
+      <div style="display: flex; gap: 0.5rem;">
+        <input type="text" id="chatInput" placeholder="メッセージを入力..." style="margin-bottom: 0;" onkeydown="if(event.key==='Enter') sendChatMessage()">
+        <button class="primary-btn" onclick="sendChatMessage()">送信</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 5. ワークスペース環境設定モーダル -->
   <div class="modal-overlay" id="settingsModal">
     <div class="modal">
       <h3 style="margin-bottom: 1.2rem;">🎨 ワークスペースの環境設定</h3>
-      
-      <!-- テーマ -->
-      <div class="setting-group">
-        <label>カラーテーマ</label>
+      <div style="margin-bottom: 1.2rem;">
+        <label style="font-size: 0.85rem; color: var(--text-sub); font-weight: bold; display: block; margin-bottom: 0.4rem;">カラーテーマ</label>
         <select id="themeSelect" onchange="applyThemePreset(this.value)">
-          <option value="dark">ダークモード (デフォルト)</option>
+          <option value="dark">ダークモード (標準)</option>
           <option value="light">ライトモード</option>
           <option value="midnight">ミッドナイトネイビー</option>
-          <option value="terminal">レトロターミナル (黒×緑)</option>
+          <option value="terminal">レトロターミナル</option>
         </select>
       </div>
-
-      <!-- アクセントカラー -->
-      <div class="setting-group">
-        <label>アクセントカラー</label>
-        <div class="color-presets">
-          <div class="color-chip" style="background: #6366f1;" onclick="setAccent('#6366f1')"></div>
-          <div class="color-chip" style="background: #06b6d4;" onclick="setAccent('#06b6d4')"></div>
-          <div class="color-chip" style="background: #10b981;" onclick="setAccent('#10b981')"></div>
-          <div class="color-chip" style="background: #f43f5e;" onclick="setAccent('#f43f5e')"></div>
-          <div class="color-chip" style="background: #f59e0b;" onclick="setAccent('#f59e0b')"></div>
+      <div style="margin-bottom: 1.2rem;">
+        <label style="font-size: 0.85rem; color: var(--text-sub); font-weight: bold; display: block; margin-bottom: 0.4rem;">アクセントカラー</label>
+        <div style="display: flex; gap: 0.5rem;">
+          <div style="width:28px;height:28px;border-radius:50%;background:#6366f1;cursor:pointer;" onclick="setAccent('#6366f1')"></div>
+          <div style="width:28px;height:28px;border-radius:50%;background:#06b6d4;cursor:pointer;" onclick="setAccent('#06b6d4')"></div>
+          <div style="width:28px;height:28px;border-radius:50%;background:#10b981;cursor:pointer;" onclick="setAccent('#10b981')"></div>
+          <div style="width:28px;height:28px;border-radius:50%;background:#f43f5e;cursor:pointer;" onclick="setAccent('#f43f5e')"></div>
+          <div style="width:28px;height:28px;border-radius:50%;background:#f59e0b;cursor:pointer;" onclick="setAccent('#f59e0b')"></div>
         </div>
       </div>
-
-      <!-- フォント設定 -->
-      <div class="setting-group">
-        <label>フォントスタイル</label>
-        <select id="fontSelect" onchange="setFont(this.value)">
-          <option value="sans-serif">ゴシック系・モダン (標準)</option>
-          <option value="serif">明朝系・クラシック</option>
-          <option value="monospace">等幅・コーディング風</option>
-        </select>
-      </div>
-
-      <!-- タブの並び順 -->
-      <div class="setting-group">
-        <label>タブの並び順</label>
-        <div class="tab-order-list" id="tabOrderList">
-          <!-- JSで動的生成 -->
-        </div>
-      </div>
-
-      <div style="display: flex; gap: 0.5rem; margin-top: 1.5rem;">
-        <button class="primary-btn" style="flex: 1;" onclick="saveCustomSettings()">保存して閉じる</button>
-        <button class="icon-btn" onclick="resetSettings()">初期化</button>
-      </div>
+      <button class="primary-btn" style="width: 100%;" onclick="closeModal('settingsModal')">保存して閉じる</button>
     </div>
   </div>
 
-  <!-- 【管理者専用】隠しコントロールパネル -->
+  <!-- 6. 【管理者専用】隠しコントロールパネル -->
   <div class="modal-overlay" id="adminModal">
     <div class="modal admin-modal">
       <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
@@ -339,22 +433,15 @@
         <button class="icon-btn" onclick="closeAdmin()">✕</button>
       </div>
       <div id="adminAuthArea">
-        <p style="font-size: 0.85rem; color: var(--text-sub); margin-bottom: 0.8rem;">
-          管理用シークレットパスコードを入力してください。
-        </p>
-        <input type="password" id="adminPassInput" placeholder="Admin Passcode" style="width: 100%; background: var(--bg-main); border: 1px solid var(--border); padding: 0.6rem; border-radius: 6px; color: var(--text); margin-bottom: 0.8rem;">
+        <input type="password" id="adminPassInput" placeholder="Admin Passcode" style="margin-bottom: 0.8rem;">
         <button class="primary-btn" style="background: #ef4444; width: 100%;" onclick="verifyAdmin()">ロック解除</button>
       </div>
       <div id="adminContentArea" style="display: none;">
-        <p style="font-size: 0.85rem; color: #22c55e; margin-bottom: 1rem;">● 監査モード：正常稼働中</p>
+        <p style="font-size: 0.85rem; color: #22c55e; margin-bottom: 0.8rem;">● 定刻監査プログラム：自動巡回中</p>
         <div class="card" style="font-size: 0.85rem;">
-          <strong>緊急通報・自動摘発ログ</strong>
-          <div style="color: var(--text-sub); margin-top: 0.5rem;">現在、重大な規約違反・自動検知フラグはありません。</div>
-        </div>
-        <div class="card" style="font-size: 0.85rem;">
-          <strong>特定ユーザー追放・強制退会 (BAN)</strong>
+          <strong>特定ユーザーBAN（追放）</strong>
           <input type="text" placeholder="追放対象のIDまたはネーム" style="margin-top: 0.5rem;">
-          <button class="primary-btn" style="background: #ef4444;" onclick="alert('対象のセッションを破棄し、アクセスをブロックしました。')">強制追放を実行</button>
+          <button class="primary-btn" style="background: #ef4444;" onclick="alert('対象の接続を切断し、アクセスを破棄しました。')">強制追放</button>
         </div>
       </div>
     </div>
@@ -364,38 +451,55 @@
   <header>
     <div class="logo">CanvasNetCreatorMEMBERSHIP</div>
     <div class="header-actions">
-      <span id="displayUser" style="font-size: 0.9rem; font-weight: bold;">未設定</span>
+      <div class="avatar-icon" id="userAvatarHeader">🎨</div>
+      <span id="displayUser" style="font-size: 0.9rem; font-weight: bold;">未認証</span>
       <button class="icon-btn" onclick="openSettings()">⚙️ 設定</button>
-      <button class="icon-btn" onclick="resetUser()">再設定</button>
+      <button class="icon-btn" onclick="openLogin()">アカウント</button>
     </div>
   </header>
 
-  <!-- 動的ナビゲーションタブ -->
+  <!-- タブナビゲーション -->
   <nav id="navBar">
-    <!-- JSによってユーザー設定順にレンダリングされます -->
+    <button class="tab-btn active" onclick="switchTab('lounge', this)">🏠 自習室ラウンジ</button>
+    <button class="tab-btn" onclick="switchTab('forum', this)">💬 相談・Q&A</button>
+    <button class="tab-btn" onclick="switchTab('drive', this)">📁 素材ドライブ</button>
+    <button class="tab-btn" onclick="switchTab('event', this)">🏆 企画・お題</button>
   </nav>
 
   <!-- メインコンテンツ -->
   <main>
     <!-- 自習室タブ -->
-    <div id="lounge" class="panel">
+    <div id="lounge" class="panel active">
+      <!-- 自分のチェックイン設定カード -->
       <div class="card">
-        <div class="card-title">作業ステータスを更新</div>
-        <input type="text" id="taskInput" placeholder="いま何の作業をしている？（例：動画のカット割り、ドラム打ち込み）">
-        <button class="primary-btn" onclick="updateTask()">自習室にチェックイン</button>
+        <div class="card-title">自習室チェックイン・ステータス設定</div>
+        <div style="display: grid; grid-template-columns: 1fr 2fr; gap: 0.8rem; margin-bottom: 0.8rem;">
+          <div>
+            <label style="font-size: 0.8rem; color: var(--text-sub); display: block; margin-bottom: 0.3rem;">現在のモード</label>
+            <select id="myStatusSelect">
+              <option value="ok">🟢 話しかけOK</option>
+              <option value="busy">🔴 一人にしてください</option>
+              <option value="work">🟡 作業中</option>
+              <option value="rest">☕ 休憩中</option>
+            </select>
+          </div>
+          <div>
+            <label style="font-size: 0.8rem; color: var(--text-sub); display: block; margin-bottom: 0.3rem;">作業の詳細・ひとこと</label>
+            <input type="text" id="myTaskInput" placeholder="例：新曲のミックスダウン、Premiereでカット割り中" style="margin-bottom: 0;">
+          </div>
+        </div>
+        <button class="primary-btn" onclick="checkInLounge()">自習室にチェックイン / 更新</button>
       </div>
 
+      <!-- メンバー一覧 -->
       <div class="card">
-        <div class="card-title">作業中のメンバー</div>
-        <div id="memberList">
-          <div class="member-item">
-            <div><span class="status-badge"></span><strong>サウンド職人B</strong></div>
-            <div style="color: var(--text-sub); font-size: 0.85rem;">BGMトラックのミキシング中</div>
-          </div>
-          <div class="member-item">
-            <div><span class="status-badge"></span><strong>ペンシル04</strong></div>
-            <div style="color: var(--text-sub); font-size: 0.85rem;">新キービジュアルのラフ描き</div>
-          </div>
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+          <div class="card-title" style="margin-bottom: 0;">在席中のクリエイター</div>
+          <span style="font-size: 0.8rem; color: var(--text-sub);">タップすると話しかけ申請ができます</span>
+        </div>
+        
+        <div class="member-grid" id="memberGrid">
+          <!-- JSで動的にメンバーを配置 -->
         </div>
       </div>
     </div>
@@ -405,7 +509,7 @@
       <div class="card">
         <div class="card-title">💬 相談・壁打ち・意見募集</div>
         <p style="color: var(--text-sub); font-size: 0.9rem; margin-bottom: 1rem;">
-          「マサカリ禁止・称賛ファースト」がルールです。作りかけの作品やプラグインの相談もお気軽に！
+          「称賛ファースト・マサカリ禁止」がルールです。
         </p>
         <button class="primary-btn">＋ 新しい相談トピックを立てる</button>
       </div>
@@ -414,9 +518,9 @@
     <!-- ドライブタブ -->
     <div id="drive" class="panel">
       <div class="card">
-        <div class="card-title">📁 フリー素材・プロジェクト共有ドライブ</div>
+        <div class="card-title">📁 素材共有ドライブ</div>
         <p style="color: var(--text-sub); font-size: 0.9rem; margin-bottom: 1rem;">
-          Google Driveの共有フォルダに連携。効果音、テクスチャ、プリセット等を自由利用できます。
+          Google Driveの共有フォルダにアクセスできます。
         </p>
         <button class="primary-btn" onclick="alert('Google Drive共有リンクへ遷移します')">Google Driveを開く</button>
       </div>
@@ -427,7 +531,7 @@
       <div class="card">
         <div class="card-title">🏆 企画・お題チャレンジ</div>
         <p style="color: var(--text-sub); font-size: 0.9rem; margin-bottom: 1rem;">
-          定期開催のワンアワー制作会や、お題作品の投稿・いいねランキングのエリアです。
+          定期開催のワンアワー制作会や、お題作品の投稿エリアです。
         </p>
         <button class="primary-btn">作品をエントリーする</button>
       </div>
@@ -435,208 +539,266 @@
   </main>
 
   <script>
-    // --- 1. タブ定義とデフォルト順序 ---
-    const defaultTabs = [
-      { id: 'lounge', name: '🏠 自習室ラウンジ' },
-      { id: 'forum', name: '💬 相談・Q&A' },
-      { id: 'drive', name: '📁 素材ドライブ' },
-      { id: 'event', name: '🏆 企画・お題' }
+    // --- 1. 定数・禁止ワードリスト ---
+    const FORBIDDEN_WORDS = [
+      '本名', 'LINE', 'ライン', '本名教えて', 'どこ住み', '住所', 
+      '電話番号', '高校どこ', '学校どこ', 'インスタ', '会おう', 'DMして'
     ];
-    let currentTabOrder = JSON.parse(localStorage.getItem('cncm_tab_order')) || defaultTabs;
 
-    // --- 2. テーマ・フォント設定 ---
-    const themes = {
-      dark: { bg: '#12141a', card: '#1c202a', border: '#2a3142', text: '#f3f4f6' },
-      light: { bg: '#f8fafc', card: '#ffffff', border: '#e2e8f0', text: '#0f172a' },
-      midnight: { bg: '#0b0f19', card: '#111827', border: '#1f2937', text: '#e5e7eb' },
-      terminal: { bg: '#0d1117', card: '#161b22', border: '#30363d', text: '#58a6ff' }
-    };
+    let selectedAvatar = '🎨';
+    let targetMember = null;
 
-    function applyThemePreset(presetKey) {
-      const theme = themes[presetKey];
-      if (!theme) return;
-      document.documentElement.style.setProperty('--bg-main', theme.bg);
-      document.documentElement.style.setProperty('--bg-card', theme.card);
-      document.documentElement.style.setProperty('--border', theme.border);
-      document.documentElement.style.setProperty('--text', theme.text);
-      localStorage.setItem('cncm_theme', presetKey);
+    // 初期ダミーメンバー
+    let activeMembers = [
+      { id: 'm1', name: 'サウンド職人B', avatar: '🎧', status: 'ok', task: 'ドラムの打ち込み中。意見求む！' },
+      { id: 'm2', name: 'ペンシル04', avatar: '🖋️', status: 'busy', task: 'キャラデザのネーム制作（集中中）' },
+      { id: 'm3', name: 'カット編集マン', avatar: '🎬', status: 'work', task: 'PVの尺詰め作業' },
+      { id: 'm4', name: 'WebCoder_X', avatar: '💻', status: 'rest', task: '息抜きにYouTube徘徊中' }
+    ];
+
+    // --- 2. Google認証 & プロフィール登録 ---
+    function mockGoogleAuth() {
+      // 実際の本番環境では firebase.auth().signInWithPopup(provider) を呼び出します
+      alert('Google認証に成功しました。（セキュアトークン照合完了）\n続いてコミュニティ内専用の匿名プロフィールを設定してください。');
+      document.getElementById('profileSetupArea').style.display = 'block';
     }
 
-    function setAccent(color) {
-      document.documentElement.style.setProperty('--accent', color);
-      localStorage.setItem('cncm_accent', color);
-    }
-
-    function setFont(fontKey) {
-      let fontStack = '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
-      if (fontKey === 'serif') fontStack = '"Yu Mincho", "Hiragino Mincho ProN", serif';
-      if (fontKey === 'monospace') fontStack = '"Fira Code", "Consolas", monospace';
-      document.documentElement.style.setProperty('--font-family', fontStack);
-      localStorage.setItem('cncm_font', fontKey);
-    }
-
-    // --- 3. タブの描画と並び替え ---
-    function renderTabs() {
-      const nav = document.getElementById('navBar');
-      nav.innerHTML = '';
-      currentTabOrder.forEach((tab, index) => {
-        const btn = document.createElement('button');
-        btn.className = `tab-btn ${index === 0 ? 'active' : ''}`;
-        btn.innerText = tab.name;
-        btn.onclick = (e) => switchTab(tab.id, e.target);
-        nav.appendChild(btn);
+    function pickAvatar(emoji) {
+      selectedAvatar = emoji;
+      document.querySelectorAll('.avatar-opt').forEach(el => {
+        el.classList.toggle('selected', el.innerText === emoji);
       });
-      // 最初のパネルを表示
-      if (currentTabOrder.length > 0) {
-        showPanel(currentTabOrder[0].id);
+    }
+
+    function completeRegistration() {
+      const name = document.getElementById('nameInput').value.trim();
+      if (!name) return alert('匿名ハンドルネームを入力してください');
+      
+      localStorage.setItem('cncm_username', name);
+      localStorage.setItem('cncm_avatar', selectedAvatar);
+      
+      updateUserHeader();
+      closeModal('loginModal');
+    }
+
+    function updateUserHeader() {
+      const name = localStorage.getItem('cncm_username') || '未設定';
+      const avatar = localStorage.getItem('cncm_avatar') || '🎨';
+      document.getElementById('displayUser').innerText = name;
+      document.getElementById('userAvatarHeader').innerText = avatar;
+    }
+
+    function openLogin() {
+      document.getElementById('loginModal').style.display = 'flex';
+    }
+
+    // --- 3. 自習室 & メンバー表示 ---
+    function renderMembers() {
+      const grid = document.getElementById('memberGrid');
+      grid.innerHTML = '';
+
+      activeMembers.forEach(m => {
+        const card = document.createElement('div');
+        card.className = 'member-card';
+        card.onclick = () => openTalkConfirm(m);
+
+        let statusDotClass = 'dot-work';
+        let statusLabel = '作業中';
+        if (m.status === 'ok') { statusDotClass = 'dot-ok'; statusLabel = '話しかけOK'; }
+        if (m.status === 'busy') { statusDotClass = 'dot-busy'; statusLabel = '全集中（声かけNG）'; }
+        if (m.status === 'rest') { statusDotClass = 'dot-rest'; statusLabel = '休憩中'; }
+
+        card.innerHTML = `
+          <div style="position: relative;">
+            <div class="avatar-icon" style="width:42px;height:42px;font-size:1.3rem;">${m.avatar}</div>
+            <span class="status-dot ${statusDotClass}"></span>
+          </div>
+          <div style="flex: 1; overflow: hidden;">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+              <strong>${m.name}</strong>
+              <span style="font-size: 0.75rem;" class="${m.status === 'busy' ? 'tag-busy' : 'tag-ok'}">${statusLabel}</span>
+            </div>
+            <div style="color: var(--text-sub); font-size: 0.8rem; text-overflow: ellipsis; white-space: nowrap; overflow: hidden; margin-top: 0.2rem;">
+              ${m.task}
+            </div>
+          </div>
+        `;
+        grid.appendChild(card);
+      });
+    }
+
+    function checkInLounge() {
+      const name = localStorage.getItem('cncm_username') || '自分';
+      const avatar = localStorage.getItem('cncm_avatar') || '🎨';
+      const status = document.getElementById('myStatusSelect').value;
+      const task = document.getElementById('myTaskInput').value.trim() || '集中作業中';
+
+      // 既存の自分を除去して先頭に追加
+      activeMembers = activeMembers.filter(m => m.name !== name);
+      activeMembers.unshift({ id: 'me', name: name, avatar: avatar, status: status, task: task });
+      renderMembers();
+      alert('自習室のステータスを更新しました！');
+    }
+
+    // --- 4. 話しかけ申請フロー ---
+    function openTalkConfirm(member) {
+      const myName = localStorage.getItem('cncm_username');
+      if (member.name === myName) return alert('これはあなた自身です。');
+
+      targetMember = member;
+      document.getElementById('targetAvatarDisplay').innerText = member.avatar;
+      document.getElementById('targetNameDisplay').innerText = `${member.name} に話しかける？`;
+      document.getElementById('targetStatusDisplay').innerText = `作業内容：${member.task}`;
+
+      const busyWarn = document.getElementById('busyWarning');
+      const sendBtn = document.getElementById('sendTalkBtn');
+
+      if (member.status === 'busy') {
+        busyWarn.style.display = 'block';
+        sendBtn.disabled = true;
+        sendBtn.style.opacity = '0.5';
+      } else {
+        busyWarn.style.display = 'none';
+        sendBtn.disabled = false;
+        sendBtn.style.opacity = '1';
       }
-      renderTabOrderConfig();
+
+      document.getElementById('talkConfirmModal').style.display = 'flex';
+    }
+
+    function requestTalk() {
+      closeModal('talkConfirmModal');
+      // 本来はサーバー経由でプッシュ通知を送る部分の体験シミュレーション
+      alert(`${targetMember.name} さんに話しかけ申請を送信しました。\n承認されるまで少々お待ちください。`);
+      
+      // テスト用：3秒後に相手から承認が返ってきた想定で動かす
+      setTimeout(() => {
+        openPrivateChat(targetMember);
+      }, 1500);
+    }
+
+    // --- 5. 完全プライベートチャット & 禁止ワード抹消 ---
+    function openPrivateChat(member) {
+      document.getElementById('chatWithName').innerText = member.name;
+      document.getElementById('chatWithAvatar').innerText = member.avatar;
+      document.getElementById('privateChatModal').style.display = 'flex';
+    }
+
+    function closeChat() {
+      document.getElementById('privateChatModal').style.display = 'none';
+    }
+
+    function sendChatMessage() {
+      const input = document.getElementById('chatInput');
+      let text = input.value.trim();
+      if (!text) return;
+
+      const chatBox = document.getElementById('chatBox');
+
+      // 禁止ワードの検知・自動削除（マスキング）
+      let violationDetected = false;
+      FORBIDDEN_WORDS.forEach(word => {
+        if (text.includes(word)) {
+          violationDetected = true;
+          text = text.split(word).join(' [検閲削除] ');
+        }
+      });
+
+      // 吹き出し生成
+      const bubble = document.createElement('div');
+      bubble.className = 'chat-bubble mine';
+      bubble.innerText = text;
+      chatBox.appendChild(bubble);
+
+      if (violationDetected) {
+        const warn = document.createElement('div');
+        warn.className = 'chat-bubble system-alert';
+        warn.innerText = '⚠️ 禁止ワード（個人情報・詮索の恐れ）を検知したため、メッセージをシステムが自動検閲しました。';
+        chatBox.appendChild(warn);
+      }
+
+      chatBox.scrollTop = chatBox.scrollHeight;
+      input.value = '';
+
+      // テスト用の返答ダミー
+      setTimeout(() => {
+        const reply = document.createElement('div');
+        reply.className = 'chat-bubble other';
+        reply.innerText = '承認ありがとうございます！その件についてですが、少し相談してもいいですか？';
+        chatBox.appendChild(reply);
+        chatBox.scrollTop = chatBox.scrollHeight;
+      }, 1000);
+    }
+
+    // --- 6. ユーティリティ・モーダル・裏コマンド ---
+    function closeModal(id) {
+      document.getElementById(id).style.display = 'none';
+    }
+
+    function openSettings() {
+      document.getElementById('settingsModal').style.display = 'flex';
     }
 
     function switchTab(tabId, targetBtn) {
       document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-      targetBtn.classList.add('active');
-      showPanel(tabId);
-    }
-
-    function showPanel(tabId) {
       document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
-      const activePanel = document.getElementById(tabId);
-      if (activePanel) activePanel.classList.add('active');
+      targetBtn.classList.add('active');
+      document.getElementById(tabId).classList.add('active');
     }
 
-    function renderTabOrderConfig() {
-      const list = document.getElementById('tabOrderList');
-      list.innerHTML = '';
-      currentTabOrder.forEach((tab, i) => {
-        const item = document.createElement('div');
-        item.className = 'tab-order-item';
-        item.innerHTML = `
-          <span>${tab.name}</span>
-          <div class="order-btns">
-            ${i > 0 ? `<button onclick="moveTab(${i}, -1)">▲</button>` : ''}
-            ${i < currentTabOrder.length - 1 ? `<button onclick="moveTab(${i}, 1)">▼</button>` : ''}
-          </div>
-        `;
-        list.appendChild(item);
-      });
+    function applyThemePreset(key) {
+      const themes = {
+        dark: { bg: '#12141a', card: '#1c202a', border: '#2a3142', text: '#f3f4f6' },
+        light: { bg: '#f8fafc', card: '#ffffff', border: '#e2e8f0', text: '#0f172a' },
+        midnight: { bg: '#0b0f19', card: '#111827', border: '#1f2937', text: '#e5e7eb' },
+        terminal: { bg: '#0d1117', card: '#161b22', border: '#30363d', text: '#58a6ff' }
+      };
+      const t = themes[key];
+      if (!t) return;
+      document.documentElement.style.setProperty('--bg-main', t.bg);
+      document.documentElement.style.setProperty('--bg-card', t.card);
+      document.documentElement.style.setProperty('--border', t.border);
+      document.documentElement.style.setProperty('--text', t.text);
     }
 
-    function moveTab(index, direction) {
-      const targetIndex = index + direction;
-      const temp = currentTabOrder[index];
-      currentTabOrder[index] = currentTabOrder[targetIndex];
-      currentTabOrder[targetIndex] = temp;
-      localStorage.setItem('cncm_tab_order', JSON.stringify(currentTabOrder));
-      renderTabs();
+    function setAccent(c) {
+      document.documentElement.style.setProperty('--accent', c);
     }
 
-    // --- 4. モーダル管理 ---
-    function openSettings() {
-      document.getElementById('settingsModal').style.display = 'flex';
-    }
-    function saveCustomSettings() {
-      document.getElementById('settingsModal').style.display = 'none';
-    }
-    function resetSettings() {
-      localStorage.removeItem('cncm_theme');
-      localStorage.removeItem('cncm_accent');
-      localStorage.removeItem('cncm_font');
-      localStorage.removeItem('cncm_tab_order');
-      location.reload();
-    }
-
-    // 匿名ネーム管理
-    function registerUser() {
-      const name = document.getElementById('nameInput').value.trim();
-      if (!name) return alert('名前を入力してください');
-      localStorage.setItem('cncm_username', name);
-      document.getElementById('displayUser').innerText = name;
-      document.getElementById('loginModal').style.display = 'none';
-    }
-
-    function resetUser() {
-      localStorage.removeItem('cncm_username');
-      document.getElementById('loginModal').style.display = 'flex';
-    }
-
-    // --- 5. 【管理者専用】裏コマンド検知システム ---
-    // キーボードで "admin" と連続入力すると管理者モーダルが開く
+    // 裏コマンド "admin"
     let keyBuffer = '';
-    const secretCode = 'admin';
-
     window.addEventListener('keydown', (e) => {
-      // 入力フォームにフォーカスしている時は無視
       if (['INPUT', 'SELECT', 'TEXTAREA'].includes(document.activeElement.tagName)) return;
-      
       keyBuffer += e.key.toLowerCase();
-      if (keyBuffer.length > secretCode.length) {
-        keyBuffer = keyBuffer.slice(-secretCode.length);
-      }
-      if (keyBuffer === secretCode) {
-        openAdmin();
+      if (keyBuffer.length > 5) keyBuffer = keyBuffer.slice(-5);
+      if (keyBuffer === 'admin') {
+        document.getElementById('adminModal').style.display = 'flex';
         keyBuffer = '';
       }
     });
 
-    function openAdmin() {
-      document.getElementById('adminModal').style.display = 'flex';
-    }
     function closeAdmin() {
       document.getElementById('adminModal').style.display = 'none';
       document.getElementById('adminAuthArea').style.display = 'block';
       document.getElementById('adminContentArea').style.display = 'none';
-      document.getElementById('adminPassInput').value = '';
     }
+
     function verifyAdmin() {
-      const pass = document.getElementById('adminPassInput').value;
-      if (pass === 'canvas2026') {
+      if (document.getElementById('adminPassInput').value === 'canvas2026') {
         document.getElementById('adminAuthArea').style.display = 'none';
         document.getElementById('adminContentArea').style.display = 'block';
       } else {
-        alert('無効な管理者パスコードです。');
+        alert('パスコードが違います');
       }
     }
 
-    // 自習室タスク更新
-    function updateTask() {
-      const task = document.getElementById('taskInput').value.trim();
-      const user = localStorage.getItem('cncm_username') || '匿名';
-      if (!task) return;
-
-      const list = document.getElementById('memberList');
-      const item = document.createElement('div');
-      item.className = 'member-item';
-      item.innerHTML = `<div><span class="status-badge"></span><strong>${user}</strong></div><div style="color: var(--text-sub); font-size: 0.85rem;">${task}</div>`;
-      list.prepend(item);
-      document.getElementById('taskInput').value = '';
-    }
-
-    // 起動時初期化
+    // 初期起動
     window.onload = () => {
-      // ユーザー確認
-      const savedUser = localStorage.getItem('cncm_username');
-      if (savedUser) {
-        document.getElementById('displayUser').innerText = savedUser;
-        document.getElementById('loginModal').style.display = 'none';
-      } else {
+      updateUserHeader();
+      renderMembers();
+      if (!localStorage.getItem('cncm_username')) {
         document.getElementById('loginModal').style.display = 'flex';
       }
-
-      // テーマ復元
-      const savedTheme = localStorage.getItem('cncm_theme') || 'dark';
-      document.getElementById('themeSelect').value = savedTheme;
-      applyThemePreset(savedTheme);
-
-      const savedAccent = localStorage.getItem('cncm_accent');
-      if (savedAccent) setAccent(savedAccent);
-
-      const savedFont = localStorage.getItem('cncm_font') || 'sans-serif';
-      document.getElementById('fontSelect').value = savedFont;
-      setFont(savedFont);
-
-      // タブ描画
-      renderTabs();
     };
   </script>
 </body>
