@@ -6,13 +6,12 @@
   <title>CanvasNetCreatorMEMBERSHIP - CNCM</title>
   <link rel="stylesheet" href="style.css">
   
-  <!-- Firebase SDK (Google認証用) -->
   <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-auth-compat.js"></script>
 </head>
 <body>
 
-  <!-- ================= 独自デザイン通知・確認ダイアログ (提案②) ================= -->
+  <!-- 独自ポップアップ (提案②) -->
   <div class="custom-modal-backdrop" id="customDialog">
     <div class="custom-dialog-card">
       <div class="dialog-icon" id="dialogIcon">ℹ️</div>
@@ -25,7 +24,7 @@
     </div>
   </div>
 
-  <!-- ================= 一般クリエイター空間（通常画面） ================= -->
+  <!-- 一般クリエイター空間 -->
   <div id="userAppContainer" class="app-root-view">
     
     <!-- ヘッダー -->
@@ -38,33 +37,32 @@
         <span class="header-username" id="displayUsername">未認証クリエイター</span>
       </div>
       <div class="header-right">
-        <!-- 全画面制御 (提案③) -->
         <button class="icon-action-btn" id="fullscreenToggleBtn" title="全画面切替">⛶ 全画面</button>
         <button class="icon-action-btn" onclick="openModal('settingsModal')">⚙️ 設定</button>
         <div class="header-avatar" id="headerAvatar" onclick="openModal('profileModal')">🎨</div>
       </div>
     </header>
 
-    <!-- 緊急アナウンスバナー（管理者から発令時に表示） -->
+    <!-- 緊急アナウンス -->
     <div class="emergency-alert-banner" id="emergencyBanner" style="display: none;">
       <span class="alert-icon">🚨</span>
       <span class="alert-text" id="emergencyBannerText">緊急告知：システム定刻監査が稼働中です。</span>
     </div>
 
-    <!-- メインナビゲーションタブ (動的レンダリング対応) -->
+    <!-- メインタブナビゲーション -->
     <nav class="main-tab-bar" id="mainTabBar"></nav>
 
-    <!-- メインビュー領域 (内部スクロール分離) -->
+    <!-- メインビュー領域 -->
     <main class="main-viewport">
       
-      <!-- 1. ポート・ラウンジ パネル -->
-      <section id="panel-lounge" class="app-panel">
+      <!-- 1. ポート・ラウンジ パネル (初期表示 active) -->
+      <section id="panel-lounge" class="app-panel active">
         <div class="sub-tab-bar">
           <button class="sub-tab-btn active" onclick="switchSubTab('panel-lounge', 'sub-port', this)">🟢 ポート (在席・ステータス)</button>
           <button class="sub-tab-btn" onclick="switchSubTab('panel-lounge', 'sub-lounge', this)">💬 ラウンジ (オープンチャット)</button>
         </div>
 
-        <!-- サブ：ポート -->
+        <!-- サブ：ポート (初期表示 active) -->
         <div id="sub-port" class="sub-panel active">
           <div class="panel-scroll-box">
             <div class="card">
@@ -101,7 +99,7 @@
           </div>
         </div>
 
-        <!-- サブ：ラウンジ (オープンチャット) -->
+        <!-- サブ：ラウンジ -->
         <div id="sub-lounge" class="sub-panel">
           <div class="chat-viewport">
             <div class="chat-top-bar">
@@ -117,7 +115,7 @@
         </div>
       </section>
 
-      <!-- 2. グループ パネル (提案④・⑤・⑥・⑦対応) -->
+      <!-- 2. グループ パネル -->
       <section id="panel-groups" class="app-panel">
         <div class="sub-tab-bar">
           <button class="sub-tab-btn active" onclick="switchSubTab('panel-groups', 'sub-group-my', this)">参加中・マイグループ</button>
@@ -127,11 +125,9 @@
           <button class="sub-tab-btn" onclick="switchSubTab('panel-groups', 'sub-group-explore', this)">探す (全公開)</button>
         </div>
 
-        <!-- 検索・表示切替コントロールバー -->
         <div class="group-control-bar">
           <div class="search-box-row">
             <input type="text" id="groupSearchInput" class="form-control" placeholder="🔍 グループ名・概要・タグでリアルタイム検索..." oninput="filterGroups()">
-            <!-- カード/リスト切替 (提案⑤) -->
             <div class="view-switch-toggle">
               <button class="btn-toggle active" id="viewCardBtn" onclick="setGroupViewMode('card')" title="カード表示">🪟</button>
               <button class="btn-toggle" id="viewListBtn" onclick="setGroupViewMode('list')" title="リスト表示">📜</button>
@@ -169,10 +165,9 @@
         </div>
       </section>
 
-      <!-- 3. 相談・Q&Aスレッド パネル (詰め① Driveメディア直接埋め込み) -->
+      <!-- 3. 相談・Q&Aスレッド パネル -->
       <section id="panel-forum" class="app-panel">
         <div class="forum-split-layout">
-          <!-- スレッドリスト側 -->
           <div class="forum-sidebar">
             <div class="forum-actions-bar">
               <button class="btn btn-primary" style="width: 100%;" onclick="openModal('newThreadModal')">＋ 相談スレッドを立てる</button>
@@ -187,14 +182,13 @@
             <div class="thread-list-scroll" id="threadListScroll"></div>
           </div>
 
-          <!-- スレッド詳細・返信ツリー側 -->
           <div class="forum-main-content" id="threadDetailView">
             <div class="empty-state-notice">左側のリストからスレッドを選択してください。</div>
           </div>
         </div>
       </section>
 
-      <!-- 4. 企画・お題 パネル (詰め② ギャラリー＆ランキング) -->
+      <!-- 4. 企画・お題 パネル -->
       <section id="panel-events" class="app-panel">
         <div class="sub-tab-bar">
           <button class="sub-tab-btn active" onclick="switchEventTab('event-topics', this)">🎯 開催中のお題</button>
@@ -204,12 +198,10 @@
         </div>
 
         <div class="panel-scroll-box">
-          <!-- お題一覧ビュー -->
           <div id="eventTopicsView" class="event-view-section active">
             <div class="topic-cards-grid" id="eventTopicsGrid"></div>
           </div>
 
-          <!-- 提出作品ギャラリー＆ランキングビュー -->
           <div id="eventGalleryView" class="event-view-section">
             <div class="event-header-box">
               <h2 id="galleryEventTitle">お題タイトル</h2>
@@ -259,7 +251,7 @@
     </main>
   </div>
 
-  <!-- ================= 最重要項目：完全独立した管理者ダッシュボード ================= -->
+  <!-- 独立管理者ダッシュボード -->
   <div id="adminDashboardRoot" class="admin-full-view" style="display: none;">
     <aside class="admin-sidebar">
       <div class="admin-brand">
@@ -280,7 +272,6 @@
     </aside>
 
     <main class="admin-main">
-      <!-- 監査ログ -->
       <section id="admin-audit" class="admin-panel active">
         <div class="admin-panel-header">
           <h2>リアルタイム自動巡回・通報キュー</h2>
@@ -304,7 +295,6 @@
         </div>
       </section>
 
-      <!-- ユーザーモデレーション -->
       <section id="admin-users" class="admin-panel">
         <div class="admin-panel-header">
           <h2>アカウント検索 ＆ 処置台帳</h2>
@@ -328,7 +318,6 @@
         </div>
       </section>
 
-      <!-- キルスイッチ＆緊急放送 -->
       <section id="admin-killswitch" class="admin-panel">
         <div class="admin-panel-header">
           <h2 style="color: #ef4444;">緊急安全装置 (キルスイッチ)</h2>
@@ -352,9 +341,7 @@
     </main>
   </div>
 
-  <!-- ================= モーダル群 ================= -->
-
-  <!-- プロフィール・Google認証モーダル -->
+  <!-- モーダル群 -->
   <div class="modal-backdrop" id="profileModal">
     <div class="modal-sheet">
       <div class="modal-header">
@@ -370,7 +357,7 @@
         </div>
 
         <div class="form-group">
-          <label>アバター絵文字 (提案⑥大幅拡張)</label>
+          <label>アバター絵文字 (提案⑥)</label>
           <div class="emoji-picker-grid" id="avatarEmojiGrid"></div>
         </div>
 
@@ -384,7 +371,6 @@
     </div>
   </div>
 
-  <!-- 環境設定モーダル (全設定完全保持) -->
   <div class="modal-backdrop" id="settingsModal">
     <div class="modal-sheet">
       <div class="modal-header">
@@ -435,7 +421,6 @@
     </div>
   </div>
 
-  <!-- 新規グループ作成モーダル (冠アイコン＆タグ拡張＆画像アップロード対応) -->
   <div class="modal-backdrop" id="newGroupModal">
     <div class="modal-sheet">
       <div class="modal-header">
@@ -444,7 +429,7 @@
       </div>
       <div class="modal-body">
         <div class="form-group">
-          <label>グループ冠絵文字 (提案⑥大幅拡張)</label>
+          <label>グループ冠絵文字 (提案⑥)</label>
           <div class="emoji-picker-grid" id="groupCrownEmojiGrid"></div>
         </div>
 
@@ -485,7 +470,6 @@
     </div>
   </div>
 
-  <!-- スレッド新規作成モーダル (Driveメディア埋め込み対応) -->
   <div class="modal-backdrop" id="newThreadModal">
     <div class="modal-sheet modal-sheet-lg">
       <div class="modal-header">
@@ -523,7 +507,6 @@
     </div>
   </div>
 
-  <!-- 企画お題 新規起案モーダル (Goldランク以上) -->
   <div class="modal-backdrop" id="newTopicModal">
     <div class="modal-sheet">
       <div class="modal-header">
@@ -548,7 +531,6 @@
     </div>
   </div>
 
-  <!-- 作品エントリーモーダル -->
   <div class="modal-backdrop" id="submitWorkModal">
     <div class="modal-sheet">
       <div class="modal-header">
@@ -573,7 +555,6 @@
     </div>
   </div>
 
-  <!-- 1対1 完全秘匿チャットモーダル -->
   <div class="modal-backdrop" id="privateChatModal">
     <div class="modal-sheet modal-chat-sheet">
       <div class="modal-header">
@@ -595,7 +576,6 @@
     </div>
   </div>
 
-  <!-- 管理者パスコード解錠モーダル -->
   <div class="modal-backdrop" id="adminUnlockModal">
     <div class="modal-sheet">
       <div class="modal-header">
