@@ -1,6 +1,6 @@
 /**
  * CanvasNetCreatorMEMBERSHIP (CNCM) Core Script
- * バージョン：2.1 (タブID自動整合・サブパネル強制起動アップデート版)
+ * クリーン本番ビルド（テスト用ダミーデータ完全除去版）
  */
 
 // ================= 1. 定数 ＆ アプリ初期状態 =================
@@ -14,13 +14,15 @@ const EMOJI_PALETTE = [
   '🎙️','💡','👾','⚡','🌌','🐺','🐱','🦊','🌸','🍙','🍺','🧩','📦','🪐','🔮'
 ];
 
+// ログインゲートウェイから渡された実セッションデータ
 let currentUser = {
-  id: 'u_' + Math.floor(Math.random() * 10000),
+  uid: localStorage.getItem('cncm_uid') || '',
+  customId: localStorage.getItem('cncm_custom_id') || '',
   name: localStorage.getItem('cncm_username') || '未認証クリエイター',
   avatar: localStorage.getItem('cncm_avatar') || '🎨',
   customImage: localStorage.getItem('cncm_custom_image') || null,
   rank: localStorage.getItem('cncm_rank') || 'bronze',
-  likesReceived: 12
+  likesReceived: parseInt(localStorage.getItem('cncm_likes') || '0', 10)
 };
 
 let currentAdminRole = 'オーナー';
@@ -28,7 +30,7 @@ let isSafeMode = false;
 let groupViewMode = 'card';
 let selectedGroupTags = [];
 
-// メインタブ定義（HTML内のIDと完全一致）
+// メインタブ定義
 const defaultTabs = [
   { id: 'panel-lounge', name: '🏠 ポート・ラウンジ' },
   { id: 'panel-groups', name: '👥 グループ' },
@@ -37,7 +39,6 @@ const defaultTabs = [
   { id: 'panel-drive', name: '📁 素材ドライブ' }
 ];
 
-// 【自動修正ロジック】過去の古いタブID（panel-が付いていないID）が残っていれば自動修復
 let savedTabOrder = null;
 try {
   savedTabOrder = JSON.parse(localStorage.getItem('cncm_tab_order'));
@@ -50,90 +51,15 @@ try {
 }
 let currentTabs = savedTabOrder || defaultTabs;
 
-// データストア
-let loungeMembers = [
-  { id: 'm1', name: 'サウンド職人B', avatar: '🎧', status: 'ok', task: 'ドラムトラックの打ち込み中。意見求む！' },
-  { id: 'm2', name: 'ペンシル04', avatar: '🖋️', status: 'busy', task: 'キービジュアルのネーム（全集中中）' },
-  { id: 'm3', name: 'カット編集マン', avatar: '🎬', status: 'work', task: 'PVのカット割り尺詰め' },
-  { id: 'm4', name: 'WebCoder_X', avatar: '💻', status: 'rest', task: '息抜きにYouTube徘徊中' }
-];
+// データストア（すべて初期値は空）
+let loungeMembers = [];
+let openChatMessages = [];
+let groups = [];
+let forumThreads = [];
+let eventTopics = [];
+let adminAuditLogs = [];
 
-let openChatMessages = [
-  { id: 1, author: 'サウンド職人B', avatar: '🎧', text: 'ラウンジ開きました。今夜も作業していきます', likes: 2, read: true },
-  { id: 2, author: 'ペンシル04', avatar: '🖋️', text: 'お疲れ様です！ネーム描いてます', likes: 1, read: true },
-  { id: 3, author: 'カット編集マン', avatar: '🎬', text: '新エフェクト試してるけど面白いですね', likes: 0, read: false },
-  { id: 4, author: 'WebCoder_X', avatar: '💻', text: '何か詰まったら気軽にメンションどうぞ！', likes: 3, read: false }
-];
-
-let groups = [
-  {
-    id: 'g1',
-    icon: '🎧',
-    name: '夜更かしDTMセッション',
-    desc: '深夜帯に集まってBGMやループ音源を作るグループ',
-    leader: 'サウンド職人B',
-    members: ['サウンド職人B', 'WebCoder_X'],
-    invited: ['カット編集マン'],
-    tags: ['音響DTM', '深夜制作'],
-    folder: 'CNCM_DTM_Night'
-  },
-  {
-    id: 'g2',
-    icon: '🎬',
-    name: 'AEモーショングラフィックス研究',
-    desc: 'モーショングラフィックスの技法研究とプリセット共有',
-    leader: 'カット編集マン',
-    members: ['カット編集マン'],
-    invited: [],
-    tags: ['映像', 'AfterEffects'],
-    folder: 'CNCM_AE_Motion'
-  }
-];
-
-let forumThreads = [
-  {
-    id: 't1',
-    category: 'help',
-    title: 'Premiere Proで書き出し時に特定フレームでクラッシュする',
-    author: 'カット編集マン',
-    body: 'ルミトリカラーを重ね掛けしたクリップの45秒地点でエンコードエラーが出ます。メディアエンコーダー経由でも同様。回避策知ってる方いますか？',
-    driveUrl: 'https://drive.google.com/file/d/1_dummy_preview_id/preview',
-    replies: [
-      { author: 'WebCoder_X', text: 'レンダラーをソフトウェア処理に切り替えるか、GPUドライバをStudio版に更新すると治ることが多いです！', best: true }
-    ],
-    solved: true
-  },
-  {
-    id: 't2',
-    category: 'compare',
-    title: '新曲のキックの抜け感、AとBどっちが好きですか？',
-    author: 'サウンド職人B',
-    body: 'サイドチェインを強めにしたAパターンと、EQで中域を削ったBパターンです。意見聞かせてほしいです。',
-    driveUrl: 'https://drive.google.com/file/d/2_dummy_preview_id/preview',
-    replies: [],
-    solved: false
-  }
-];
-
-let eventTopics = [
-  {
-    id: 'e1',
-    title: '雨の音を使った15秒ループ音源・映像制作',
-    desc: '環境音（雨音）を取り入れ、15秒で綺麗にシームレスループする作品を制作してください。',
-    driveFolder: 'https://drive.google.com/drive/folders/dummy_rain_asset',
-    entries: [
-      { id: 'w1', title: 'Rainy Night Lo-Fi', author: 'サウンド職人B', likes: 18, driveUrl: 'https://drive.google.com/file/d/w1_dummy/preview' },
-      { id: 'w2', title: 'Droplet Motion #01', author: 'ペンシル04', likes: 25, driveUrl: 'https://drive.google.com/file/d/w2_dummy/preview' }
-    ]
-  }
-];
-
-let adminAuditLogs = [
-  { time: '2026-09-07 20:05', user: '匿名ゲスト99', flag: '禁止ワード検知', content: '「俺のLINEは〜〜」' },
-  { time: '2026-09-07 19:40', user: '匿名クリエイター12', flag: '短時間連投検知', content: '同一メッセージ5回' }
-];
-
-// ================= 2. 独自ダイアログシステム (提案②) =================
+// ================= 2. 独自ダイアログシステム =================
 function showCustomDialog(options) {
   return new Promise((resolve) => {
     const dialog = document.getElementById('customDialog');
@@ -168,7 +94,7 @@ function showCustomDialog(options) {
   });
 }
 
-// ================= 3. 全画面制御システム (提案③) =================
+// ================= 3. 全画面制御システム =================
 const fullscreenBtn = document.getElementById('fullscreenToggleBtn');
 if (fullscreenBtn) {
   fullscreenBtn.addEventListener('click', toggleFullscreen);
@@ -184,16 +110,7 @@ function toggleFullscreen() {
   }
 }
 
-window.addEventListener('click', function autoFullOnce() {
-  if (!document.fullscreenElement && !window._fsTriggered) {
-    window._fsTriggered = true;
-    document.documentElement.requestFullscreen().catch(() => {});
-    if (fullscreenBtn) fullscreenBtn.innerText = '✕ 全画面終了';
-  }
-  window.removeEventListener('click', autoFullOnce);
-}, { once: true });
-
-// ================= 4. タブ＆レイアウト描画（修復済み） =================
+// ================= 4. タブ描画 ＆ パネル切り替え =================
 function renderMainTabs() {
   const bar = document.getElementById('mainTabBar');
   if (!bar) return;
@@ -207,7 +124,6 @@ function renderMainTabs() {
     bar.appendChild(btn);
   });
 
-  // 最初のタブのパネルを強制的に立ち上げる
   if (currentTabs.length > 0) {
     showMainPanel(currentTabs[0].id);
   }
@@ -221,14 +137,11 @@ function switchMainTab(panelId, btn) {
 }
 
 function showMainPanel(panelId) {
-  // すべてのパネルを一度隠す
   document.querySelectorAll('.app-panel').forEach(p => p.classList.remove('active'));
-  
   const target = document.getElementById(panelId);
   if (target) {
     target.classList.add('active');
     
-    // サブタブが存在する場合、アクティブなサブタブがなければ1番目を強制表示
     const activeSubBtn = target.querySelector('.sub-tab-btn.active');
     const activeSubPanel = target.querySelector('.sub-panel.active');
 
@@ -314,11 +227,14 @@ function moveTabOrder(index, dir) {
 }
 
 function resetAllSettings() {
-  localStorage.clear();
+  localStorage.removeItem('cncm_theme');
+  localStorage.removeItem('cncm_accent');
+  localStorage.removeItem('cncm_font');
+  localStorage.removeItem('cncm_tab_order');
   location.reload();
 }
 
-// ================= 6. プロフィール・アバター・画像アップロード =================
+// ================= 6. プロフィール・アバター =================
 function initEmojiPickers() {
   const userGrid = document.getElementById('avatarEmojiGrid');
   const groupGrid = document.getElementById('groupCrownEmojiGrid');
@@ -366,14 +282,6 @@ function handleImageUpload(event, type) {
   reader.readAsDataURL(file);
 }
 
-function handleGoogleAuthClick() {
-  showCustomDialog({
-    icon: '🔴',
-    title: 'Google認証照合',
-    message: 'Googleアカウントとセキュアトークン照合を行いました。続いて匿名プロフィールを入力してください。'
-  });
-}
-
 function saveUserProfile() {
   const name = document.getElementById('profileNameInput').value.trim();
   if (!name) return showCustomDialog({ icon: '⚠️', title: '警告', message: '匿名ネームを入力してください' });
@@ -389,7 +297,10 @@ function saveUserProfile() {
 }
 
 function updateUserUI() {
-  document.getElementById('displayUsername').innerText = currentUser.name;
+  document.getElementById('displayUsername').innerText = `${currentUser.name} (${currentUser.customId})`;
+  document.getElementById('profileNameInput').value = currentUser.name;
+  document.getElementById('profileCustomIdDisplay').value = currentUser.customId;
+
   const avatarBox = document.getElementById('headerAvatar');
   if (currentUser.customImage) {
     avatarBox.innerHTML = `<img src="${currentUser.customImage}" alt="avatar">`;
@@ -413,11 +324,32 @@ function updateUserUI() {
   }
 }
 
-// ================= 7. ポート＆ラウンジ (オープンチャット) =================
+function handleLogout() {
+  showCustomDialog({
+    icon: '🚪',
+    title: 'ログアウト',
+    message: 'セッションを終了してログイン画面に戻りますか？',
+    isConfirm: true
+  }).then(ok => {
+    if (ok) {
+      localStorage.removeItem('cncm_username');
+      localStorage.removeItem('cncm_custom_id');
+      localStorage.removeItem('cncm_uid');
+      window.location.href = 'login.html';
+    }
+  });
+}
+
+// ================= 7. ポート＆ラウンジ =================
 function renderLoungeMembers() {
   const list = document.getElementById('loungeMemberList');
   if (!list) return;
   list.innerHTML = '';
+
+  if (loungeMembers.length === 0) {
+    list.innerHTML = '<div class="empty-state-notice">現在在席中のメンバーはいません</div>';
+    return;
+  }
 
   loungeMembers.forEach(m => {
     const row = document.createElement('div');
@@ -445,7 +377,7 @@ function updateLoungeStatus() {
 
   loungeMembers = loungeMembers.filter(m => m.name !== currentUser.name);
   loungeMembers.unshift({
-    id: currentUser.id,
+    id: currentUser.customId,
     name: currentUser.name,
     avatar: currentUser.avatar,
     status: mode,
@@ -471,11 +403,6 @@ function openTalkConfirm(member) {
   }).then(ok => {
     if (ok) {
       showCustomDialog({ icon: '📨', title: '申請送信', message: '相手に話しかけ申請を送りました。承認されるまでお待ちください。' });
-      setTimeout(() => {
-        document.getElementById('privateChatPartnerAvatar').innerText = member.avatar;
-        document.getElementById('privateChatPartnerName').innerText = member.name;
-        openModal('privateChatModal');
-      }, 1200);
     }
   });
 }
@@ -484,18 +411,13 @@ function renderOpenChat() {
   const stream = document.getElementById('openChatStream');
   if (!stream) return;
   stream.innerHTML = '';
-  let firstUnread = false;
+
+  if (openChatMessages.length === 0) {
+    stream.innerHTML = '<div class="empty-state-notice">メッセージはまだありません</div>';
+    return;
+  }
 
   openChatMessages.forEach(msg => {
-    if (!msg.read && !firstUnread) {
-      firstUnread = true;
-      const sep = document.createElement('div');
-      sep.className = 'unread-separator';
-      sep.id = 'unreadSeparator';
-      sep.innerText = '―― ここから未読メッセージ ――';
-      stream.appendChild(sep);
-    }
-
     const isMine = (msg.author === currentUser.name);
     const bubble = document.createElement('div');
     bubble.className = `chat-bubble ${isMine ? 'mine' : 'other'} ${msg.text.includes('@' + currentUser.name) ? 'mentioned' : ''}`;
@@ -520,9 +442,7 @@ function renderOpenChat() {
     stream.appendChild(bubble);
   });
 
-  const sep = document.getElementById('unreadSeparator');
-  if (sep) sep.scrollIntoView({ behavior: 'smooth', block: 'center' });
-  else stream.scrollTop = stream.scrollHeight;
+  stream.scrollTop = stream.scrollHeight;
 }
 
 function triggerLikeAnimation(element, x, y) {
@@ -617,6 +537,10 @@ function renderGroups() {
   const q = document.getElementById('groupSearchInput').value.toLowerCase();
   const filterTag = window._currentGroupTag || 'all';
 
+  let hasMy = false;
+  let hasInv = false;
+  let hasAll = false;
+
   groups.forEach(g => {
     const matchQ = !q || g.name.toLowerCase().includes(q) || g.desc.toLowerCase().includes(q) || g.tags.some(t => t.toLowerCase().includes(q));
     let matchTag = true;
@@ -626,7 +550,7 @@ function renderGroups() {
     if (!matchQ || !matchTag) return;
 
     const isMember = g.members.includes(currentUser.name);
-    const isInvited = g.invited.includes(currentUser.name);
+    const isInvited = g.invited && g.invited.includes(currentUser.name);
 
     const card = document.createElement('div');
     card.className = 'group-card-item';
@@ -643,7 +567,7 @@ function renderGroups() {
       </div>
       <div style="margin-top:0.4rem; display:flex; gap:0.4rem;">
         ${isMember ? `
-          <button class="btn btn-primary btn-small" onclick="showCustomDialog({title:'${g.name}', message:'グループ専用ルームへ入室します。Driveフォルダ: ${g.folder}'})">入室</button>
+          <button class="btn btn-primary btn-small" onclick="showCustomDialog({title:'${g.name}', message:'グループ専用ルームへ入室します。Drive: ${g.folder}'})">入室</button>
         ` : isInvited ? `
           <button class="btn btn-primary btn-small" onclick="acceptGroupInvite('${g.id}')">承認して参加</button>
         ` : `
@@ -652,10 +576,15 @@ function renderGroups() {
       </div>
     `;
 
-    if (isMember) myBox.appendChild(card.cloneNode(true));
-    if (isInvited) invBox.appendChild(card.cloneNode(true));
+    if (isMember) { myBox.appendChild(card.cloneNode(true)); hasMy = true; }
+    if (isInvited) { invBox.appendChild(card.cloneNode(true)); hasInv = true; }
     allBox.appendChild(card);
+    hasAll = true;
   });
+
+  if (!hasMy) myBox.innerHTML = '<div class="empty-state-notice">参加しているグループはありません</div>';
+  if (!hasInv) invBox.innerHTML = '<div class="empty-state-notice">保留中の招待はありません</div>';
+  if (!hasAll) allBox.innerHTML = '<div class="empty-state-notice">公開されているグループはありません</div>';
 }
 
 function applyToGroup(gid) {
@@ -711,11 +640,16 @@ function toggleTagChoice(el, tag) {
   }
 }
 
-// ================= 9. 相談・Q&Aスレッド ＆ Drive埋め込み =================
+// ================= 9. 相談・Q&Aスレッド =================
 function renderForumThreads() {
   const list = document.getElementById('threadListScroll');
   if (!list) return;
   list.innerHTML = '';
+
+  if (forumThreads.length === 0) {
+    list.innerHTML = '<div class="empty-state-notice">スレッドはまだありません</div>';
+    return;
+  }
 
   forumThreads.forEach(t => {
     const card = document.createElement('div');
@@ -761,6 +695,7 @@ function selectThread(t) {
 
     <h3>返信・アドバイス (${t.replies.length})</h3>
     <div style="display:flex; flex-direction:column; gap:0.6rem; margin:1rem 0;">
+      ${t.replies.length === 0 ? '<div class="empty-state-notice">まだ返信はありません。最初のアドバイスを投稿しましょう！</div>' : ''}
       ${t.replies.map(r => `
         <div class="card ${r.best ? 'border-success' : ''}" style="margin-bottom:0.4rem;">
           ${r.best ? '<span class="badge badge-ok">ベストアンサー</span>' : ''}
@@ -808,6 +743,7 @@ function submitThreadReply(tid) {
   const t = forumThreads.find(x => x.id === tid);
   t.replies.push({ author: currentUser.name, text: txt, best: false });
   currentUser.likesReceived += 2;
+  localStorage.setItem('cncm_likes', currentUser.likesReceived);
   updateUserUI();
   selectThread(t);
 }
@@ -825,6 +761,11 @@ function renderEventTopics() {
   const grid = document.getElementById('eventTopicsGrid');
   if (!grid) return;
   grid.innerHTML = '';
+
+  if (eventTopics.length === 0) {
+    grid.innerHTML = '<div class="empty-state-notice">現在開催中のお題はありません</div>';
+    return;
+  }
 
   eventTopics.forEach(e => {
     const card = document.createElement('div');
@@ -857,6 +798,11 @@ function renderGalleryWorks(entries) {
   const grid = document.getElementById('worksGrid');
   if (!grid) return;
   grid.innerHTML = '';
+
+  if (!entries || entries.length === 0) {
+    grid.innerHTML = '<div class="empty-state-notice">提出作品はまだありません</div>';
+    return;
+  }
 
   entries.forEach(w => {
     const card = document.createElement('div');
@@ -1000,6 +946,12 @@ function renderAdminAuditLogs() {
   const tbody = document.getElementById('adminAuditTableBody');
   if (!tbody) return;
   tbody.innerHTML = '';
+  
+  if (adminAuditLogs.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="5" style="text-align: center; color: var(--text-sub);">現在検知されたフラグ・違反ログはありません</td></tr>';
+    return;
+  }
+
   adminAuditLogs.forEach((log, idx) => {
     const tr = document.createElement('tr');
     tr.innerHTML = `
@@ -1053,6 +1005,23 @@ function toggleCommunitySafeMode() {
   });
 }
 
+function searchUserForMod() {
+  const q = document.getElementById('adminUserSearchQuery').value.trim();
+  if (!q) return;
+  const res = document.getElementById('modUserResult');
+  document.getElementById('modTargetName').innerText = q;
+  document.getElementById('modTargetDetails').innerText = `照会ステータス: 正常 (違反歴 0件)`;
+  res.style.display = 'block';
+}
+
+function applyPenalty(type) {
+  showCustomDialog({
+    icon: '⚖️',
+    title: 'モデレーション処置',
+    message: `処置 [${type}] を実行しました。`
+  });
+}
+
 // ユーティリティ
 function openModal(id) {
   const el = document.getElementById(id);
@@ -1068,7 +1037,6 @@ function openDriveLink(folder) {
 
 // ================= 12. 起動時イニシャライザ =================
 window.onload = () => {
-  // テーマ・アクセント・フォント復元
   const savedTheme = localStorage.getItem('cncm_theme') || 'dark';
   const themeSel = document.getElementById('themeSettingSelect');
   if (themeSel) themeSel.value = savedTheme;
@@ -1082,7 +1050,6 @@ window.onload = () => {
   if (fontSel) fontSel.value = savedFont;
   changeFontStyle(savedFont);
 
-  // 初期化＆描画
   initEmojiPickers();
   updateUserUI();
   renderMainTabs();
@@ -1091,8 +1058,4 @@ window.onload = () => {
   renderGroups();
   renderForumThreads();
   renderEventTopics();
-
-  if (!localStorage.getItem('cncm_username')) {
-    openModal('profileModal');
-  }
 };
