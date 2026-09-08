@@ -1,9 +1,11 @@
 /**
  * CanvasNetCreatorMEMBERSHIP (CNCM) Core Script
- * クリーン本番ビルド（テスト用ダミーデータ完全除去版）
+ * バージョン：3.0 (GASスプレッドシート完全統合・ハートビート・切断検知版)
  */
 
 // ================= 1. 定数 ＆ アプリ初期状態 =================
+const GAS_API_URL = "https://script.google.com/macros/s/YOUR_GAS_DEPLOY_ID/exec";
+
 const FORBIDDEN_WORDS = [
   '本名', 'LINE', 'ライン', '本名教えて', 'どこ住み', '住所', 
   '電話番号', '高校どこ', '学校どこ', 'インスタ', '会おう', 'DMして'
@@ -14,7 +16,6 @@ const EMOJI_PALETTE = [
   '🎙️','💡','👾','⚡','🌌','🐺','🐱','🦊','🌸','🍙','🍺','🧩','📦','🪐','🔮'
 ];
 
-// ログインゲートウェイから渡された実セッションデータ
 let currentUser = {
   uid: localStorage.getItem('cncm_uid') || '',
   customId: localStorage.getItem('cncm_custom_id') || '',
@@ -51,7 +52,7 @@ try {
 }
 let currentTabs = savedTabOrder || defaultTabs;
 
-// データストア（すべて初期値は空）
+// データストア
 let loungeMembers = [];
 let openChatMessages = [];
 let groups = [];
@@ -59,7 +60,24 @@ let forumThreads = [];
 let eventTopics = [];
 let adminAuditLogs = [];
 
-// ================= 2. 独自ダイアログシステム =================
+// ================= 2. 生存信号（ハートビート） ＆ 切断検知 =================
+// 60秒おきにスプレッドシートへ生存信号を送信
+setInterval(() => {
+  if (currentUser.customId && GAS_API_URL.indexOf("YOUR_GAS_DEPLOY_ID") === -1) {
+    fetch(`${GAS_API_URL}?action=heartbeat&customId=${encodeURIComponent(currentUser.customId)}`, {
+      mode: "no-cors"
+    }).catch(() => {});
+  }
+}, 60000);
+
+// タブ閉じ・画面離脱時の即時退席通知
+window.addEventListener('beforeunload', () => {
+  if (currentUser.customId && GAS_API_URL.indexOf("https://script.google.com/macros/s/AKfycbwKm4uaaQlYAaN-ufh38v-XjZSLKzpThUliTHuoB48LlfBd9Wg_Vu-ir4YkrYoaS1BB4g/exec") === -1) {
+    navigator.sendBeacon(`${GAS_API_URL}?action=logout&customId=${encodeURIComponent(currentUser.customId)}`);
+  }
+});
+
+// ================= 3. 独自ダイアログシステム =================
 function showCustomDialog(options) {
   return new Promise((resolve) => {
     const dialog = document.getElementById('customDialog');
@@ -94,7 +112,7 @@ function showCustomDialog(options) {
   });
 }
 
-// ================= 3. 全画面制御システム =================
+// ================= 4. 全画面制御システム =================
 const fullscreenBtn = document.getElementById('fullscreenToggleBtn');
 if (fullscreenBtn) {
   fullscreenBtn.addEventListener('click', toggleFullscreen);
@@ -110,7 +128,7 @@ function toggleFullscreen() {
   }
 }
 
-// ================= 4. タブ描画 ＆ パネル切り替え =================
+// ================= 5. タブ描画 ＆ パネル切り替え =================
 function renderMainTabs() {
   const bar = document.getElementById('mainTabBar');
   if (!bar) return;
@@ -168,7 +186,7 @@ function switchSubTab(parentPanelId, subPanelId, btn) {
   if (targetSub) targetSub.classList.add('active');
 }
 
-// ================= 5. 設定カスタマイズ機能 =================
+// ================= 6. 設定カスタマイズ機能 =================
 function changeColorTheme(themeKey) {
   const themes = {
     dark: { bg: '#12141a', card: '#1c202a', sub: '#161922', border: '#2a3142', text: '#f3f4f6' },
@@ -234,7 +252,7 @@ function resetAllSettings() {
   location.reload();
 }
 
-// ================= 6. プロフィール・アバター =================
+// ================= 7. プロフィール・アバター =================
 function initEmojiPickers() {
   const userGrid = document.getElementById('avatarEmojiGrid');
   const groupGrid = document.getElementById('groupCrownEmojiGrid');
@@ -332,6 +350,9 @@ function handleLogout() {
     isConfirm: true
   }).then(ok => {
     if (ok) {
+      if (currentUser.customId && GAS_API_URL.indexOf("YOUR_GAS_DEPLOY_ID") === -1) {
+        navigator.sendBeacon(`${GAS_API_URL}?action=logout&customId=${encodeURIComponent(currentUser.customId)}`);
+      }
       localStorage.removeItem('cncm_username');
       localStorage.removeItem('cncm_custom_id');
       localStorage.removeItem('cncm_uid');
@@ -340,7 +361,7 @@ function handleLogout() {
   });
 }
 
-// ================= 7. ポート＆ラウンジ =================
+// ================= 8. ポート＆ラウンジ (ステータス同期) =================
 function renderLoungeMembers() {
   const list = document.getElementById('loungeMemberList');
   if (!list) return;
@@ -357,7 +378,7 @@ function renderLoungeMembers() {
     row.onclick = () => openTalkConfirm(m);
 
     row.innerHTML = `
-      <div class="header-avatar">${m.avatar}</div>
+      <div class="header-avatar">${m.avatar || '🎨'}</div>
       <span class="status-dot dot-${m.status}"></span>
       <div style="flex:1; min-width:0;">
         <div style="display:flex; justify-content:space-between;">
@@ -375,15 +396,33 @@ function updateLoungeStatus() {
   const mode = document.getElementById('myStatusMode').value;
   const task = document.getElementById('myTaskInput').value.trim() || '集中制作中';
 
-  loungeMembers = loungeMembers.filter(m => m.name !== currentUser.name);
+  loungeMembers = loungeMembers.filter(m => m.customId !== currentUser.customId);
   loungeMembers.unshift({
-    id: currentUser.customId,
+    customId: currentUser.customId,
     name: currentUser.name,
     avatar: currentUser.avatar,
     status: mode,
-    task: task
+    task: task,
+    isOnline: true
   });
   renderLoungeMembers();
+
+  // スプレッドシート（動的ステータス台帳）への反映
+  if (GAS_API_URL.indexOf("YOUR_GAS_DEPLOY_ID") === -1) {
+    fetch(GAS_API_URL, {
+      method: "POST",
+      mode: "no-cors",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        action: "updateStatus",
+        customId: currentUser.customId,
+        nickname: currentUser.name,
+        status: mode,
+        task: task
+      })
+    }).catch(() => {});
+  }
+
   showCustomDialog({ icon: '🟢', title: 'ステータス更新', message: '自習室の在席状況を更新しました。' });
 }
 
@@ -394,7 +433,7 @@ function openTalkConfirm(member) {
   }
 
   showCustomDialog({
-    icon: member.avatar,
+    icon: member.avatar || '🎨',
     title: `${member.name} に話しかける？`,
     message: `作業内容：${member.task}`,
     isConfirm: true,
@@ -463,9 +502,28 @@ function sendOpenChatMessage() {
   let text = input.value.trim();
   if (!text) return;
 
+  let cens = false;
   FORBIDDEN_WORDS.forEach(w => {
-    if (text.includes(w)) text = text.split(w).join(' [検閲削除] ');
+    if (text.includes(w)) {
+      cens = true;
+      text = text.split(w).join(' [検閲削除] ');
+    }
   });
+
+  // 禁止ワード検知時はスプレッドシート（通報・監査ログ）へ自動ロギング
+  if (cens && GAS_API_URL.indexOf("YOUR_GAS_DEPLOY_ID") === -1) {
+    fetch(GAS_API_URL, {
+      method: "POST",
+      mode: "no-cors",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        action: "logAudit",
+        customId: currentUser.customId,
+        flag: "禁止ワード検知",
+        content: text
+      })
+    }).catch(() => {});
+  }
 
   openChatMessages.push({
     id: Date.now(),
@@ -503,7 +561,7 @@ function sendPrivateChatMessage() {
   input.value = '';
 }
 
-// ================= 8. グループ管理 =================
+// ================= 9. グループ管理 (スプレッドシート登録連携) =================
 function setGroupViewMode(mode) {
   groupViewMode = mode;
   document.getElementById('viewCardBtn').classList.toggle('active', mode === 'card');
@@ -544,7 +602,7 @@ function renderGroups() {
   groups.forEach(g => {
     const matchQ = !q || g.name.toLowerCase().includes(q) || g.desc.toLowerCase().includes(q) || g.tags.some(t => t.toLowerCase().includes(q));
     let matchTag = true;
-    if (filterTag === 'leader') matchTag = (g.leader === currentUser.name);
+    if (filterTag === 'leader') matchTag = (g.leader === currentUser.name || g.leader === currentUser.customId);
     else if (filterTag !== 'all') matchTag = g.tags.includes(filterTag);
 
     if (!matchQ || !matchTag) return;
@@ -558,7 +616,7 @@ function renderGroups() {
       <div style="display:flex; align-items:center; gap:0.5rem;">
         <span style="font-size:1.3rem;">${g.icon}</span>
         <div>
-          <strong>${g.name}</strong> ${g.leader === currentUser.name ? '<span class="user-rank-badge">👑 Leader</span>' : ''}
+          <strong>${g.name}</strong> ${(g.leader === currentUser.name || g.leader === currentUser.customId) ? '<span class="user-rank-badge">👑 Leader</span>' : ''}
           <div class="sub-text">${g.desc}</div>
         </div>
       </div>
@@ -613,20 +671,42 @@ function submitCreateGroup() {
   let tags = [...selectedGroupTags];
   if (custom) tags = tags.concat(custom.split(',').map(s => s.trim()));
 
-  groups.push({
+  const newGroupObj = {
     id: 'g_' + Date.now(),
     icon: window._selectedGroupIcon || '🎬',
     name: name,
     desc: desc || 'クリエイティブ・プロジェクト',
-    leader: currentUser.name,
+    leader: currentUser.customId,
     members: [currentUser.name],
     invited: [],
     tags: tags,
     folder: 'CNCM_' + name.replace(/\s+/g, '_')
-  });
+  };
 
+  groups.push(newGroupObj);
   renderGroups();
   closeModal('newGroupModal');
+
+  // スプレッドシート（グループ台帳）へ自動保存
+  if (GAS_API_URL.indexOf("YOUR_GAS_DEPLOY_ID") === -1) {
+    fetch(GAS_API_URL, {
+      method: "POST",
+      mode: "no-cors",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        action: "createGroup",
+        id: newGroupObj.id,
+        icon: newGroupObj.icon,
+        name: newGroupObj.name,
+        desc: newGroupObj.desc,
+        leader: currentUser.customId,
+        members: newGroupObj.members,
+        tags: newGroupObj.tags,
+        folder: newGroupObj.folder
+      })
+    }).catch(() => {});
+  }
+
   showCustomDialog({ icon: '👑', title: 'グループ作成', message: `「${name}」を作成し、初期リーダーに就任しました。` });
 }
 
@@ -640,7 +720,7 @@ function toggleTagChoice(el, tag) {
   }
 }
 
-// ================= 9. 相談・Q&Aスレッド =================
+// ================= 10. 相談・Q&Aスレッド =================
 function renderForumThreads() {
   const list = document.getElementById('threadListScroll');
   if (!list) return;
@@ -756,7 +836,7 @@ function resolveThread(tid) {
   showCustomDialog({ icon: '🎉', title: '解決！', message: 'スレッドを解決済みに設定しました。' });
 }
 
-// ================= 10. 企画お題 ＆ ギャラリー =================
+// ================= 11. 企画お題 ＆ ギャラリー =================
 function renderEventTopics() {
   const grid = document.getElementById('eventTopicsGrid');
   if (!grid) return;
@@ -902,7 +982,7 @@ function switchEventTab(tabKey, btn) {
   }
 }
 
-// ================= 11. 独立管理者ダッシュボード＆裏コマンド =================
+// ================= 12. 独立管理者ダッシュボード＆裏コマンド =================
 let keyBuffer = '';
 window.addEventListener('keydown', (e) => {
   if (['INPUT', 'TEXTAREA', 'SELECT'].includes(document.activeElement.tagName)) return;
@@ -1035,7 +1115,7 @@ function openDriveLink(folder) {
   showCustomDialog({ icon: '📁', title: 'Google Drive', message: `共有ドライブ [${folder}] フォルダを開きます。` });
 }
 
-// ================= 12. 起動時イニシャライザ =================
+// ================= 13. 起動時イニシャライザ =================
 window.onload = () => {
   const savedTheme = localStorage.getItem('cncm_theme') || 'dark';
   const themeSel = document.getElementById('themeSettingSelect');
