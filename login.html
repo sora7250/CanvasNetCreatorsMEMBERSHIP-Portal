@@ -207,18 +207,16 @@
 
   <script>
     // ==========================================
-    // 1. Firebase初期化設定
-    // ※Firebase Consoleから取得したConfigを貼り付けてください
+    // 1. Firebase ＆ GAS 初期化設定
     // ==========================================
-      const firebaseConfig = {
-    apiKey: "AIzaSyBeYFJcI1hrhFAxwk_m6LlM8itq_gEHRe0",
-    authDomain: "cncm-portal-af30f.firebaseapp.com",
-    projectId: "cncm-portal-af30f",
-    storageBucket: "cncm-portal-af30f.firebasestorage.app",
-    messagingSenderId: "55869029103",
-    appId: "1:55869029103:web:d912707290d7fb5cebf91a",
-    measurementId: "G-GRYLVXCZ8S"
-  };
+    const firebaseConfig = {
+      apiKey: "YOUR_API_KEY",
+      authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
+      projectId: "YOUR_PROJECT_ID",
+      storageBucket: "YOUR_PROJECT_ID.appspot.com",
+      messagingSenderId: "YOUR_SENDER_ID",
+      appId: "YOUR_APP_ID"
+    };
 
     if (!firebase.apps.length) {
       firebase.initializeApp(firebaseConfig);
@@ -226,10 +224,12 @@
     const auth = firebase.auth();
     const db = firebase.firestore();
 
+    // デプロイしたGASウェブアプリのURL
+    const GAS_API_URL = "https://script.google.com/macros/s/AKfycbwKm4uaaQlYAaN-ufh38v-XjZSLKzpThUliTHuoB48LlfBd9Wg_Vu-ir4YkrYoaS1BB4g/exec";
+
     let authenticatedUser = null;
     let selectedAvatar = '🎨';
 
-    // 固有ID用ランダム生成（例：CNCM-4821）
     function generateDefaultCustomId() {
       const rand = Math.floor(1000 + Math.random() * 9000);
       return `CNCM-${rand}`;
@@ -255,11 +255,9 @@
           authenticatedUser = result.user;
           status.innerText = 'アカウント情報を照合中...';
 
-          // Firestoreに既存データがあるかチェック
           const userDoc = await db.collection('users').doc(authenticatedUser.uid).get();
 
           if (userDoc.exists) {
-            // 【既存ユーザー】：登録内容をキャッシュしてindex.htmlへ遷移
             status.style.color = 'var(--success)';
             status.innerText = '認証成功！ポータルへ入場します...';
             
@@ -274,7 +272,6 @@
               window.location.href = 'index.html';
             }, 800);
           } else {
-            // 【新規ユーザー】：ステップ2（固有ID・ネーム登録）を展開
             status.innerText = '';
             document.getElementById('stepAuth').style.display = 'none';
             document.getElementById('stepProfile').style.display = 'block';
@@ -288,7 +285,7 @@
     }
 
     // ==========================================
-    // 3. 初回登録完了処理（Firestore保存）
+    // 3. 初回登録完了処理（Firestore ＆ スプレッドシート連携）
     // ==========================================
     async function completeRegistration() {
       const customId = document.getElementById('customIdInput').value.trim();
@@ -301,7 +298,6 @@
         return;
       }
 
-      // ID重複チェック
       status.style.color = 'var(--text-sub)';
       status.innerText = '固有IDの重複を確認中...';
 
@@ -313,9 +309,9 @@
           return;
         }
 
-        status.innerText = 'アカウントを作成中...';
+        status.innerText = 'アカウントを登録中...';
 
-        // Firestoreへ保存（※メールアドレスや本名は含めない）
+        // 1. Firebase Firestoreへの安全保存（メールアドレス等は保存しない）
         const userData = {
           uid: authenticatedUser.uid,
           customId: customId,
@@ -324,10 +320,22 @@
           rank: 'bronze',
           createdAt: firebase.firestore.FieldValue.serverTimestamp()
         };
-
         await db.collection('users').doc(authenticatedUser.uid).set(userData);
 
-        // LocalStorageに保存してindex.htmlへ遷移
+        // 2. Googleスプレッドシート（一般マスター ＆ 動的ステータス台帳）への自動蓄積
+        fetch(GAS_API_URL, {
+          method: "POST",
+          mode: "no-cors",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            action: "registerUser",
+            customId: customId,
+            nickname: nickname,
+            avatar: selectedAvatar
+          })
+        }).catch(() => {});
+
+        // 3. LocalStorageへセッション保持
         localStorage.setItem('cncm_uid', authenticatedUser.uid);
         localStorage.setItem('cncm_username', nickname);
         localStorage.setItem('cncm_custom_id', customId);
