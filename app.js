@@ -4,7 +4,7 @@
  */
 
 // ================= 1. 定数 ＆ アプリ初期状態 =================
-const GAS_API_URL = "https://script.google.com/macros/s/YOUR_GAS_DEPLOY_ID/exec";
+const GAS_API_URL = "https://script.google.com/macros/s/AKfycbwKm4uaaQlYAaN-ufh38v-XjZSLKzpThUliTHuoB48LlfBd9Wg_Vu-ir4YkrYoaS1BB4g/exec";
 
 const FORBIDDEN_WORDS = [
   '本名', 'LINE', 'ライン', '本名教えて', 'どこ住み', '住所', 
@@ -72,7 +72,7 @@ setInterval(() => {
 
 // タブ閉じ・画面離脱時の即時退席通知
 window.addEventListener('beforeunload', () => {
-  if (currentUser.customId && GAS_API_URL.indexOf("https://script.google.com/macros/s/AKfycbwKm4uaaQlYAaN-ufh38v-XjZSLKzpThUliTHuoB48LlfBd9Wg_Vu-ir4YkrYoaS1BB4g/exec") === -1) {
+  if (currentUser.customId && GAS_API_URL.indexOf("YOUR_GAS_DEPLOY_ID") === -1) {
     navigator.sendBeacon(`${GAS_API_URL}?action=logout&customId=${encodeURIComponent(currentUser.customId)}`);
   }
 });
