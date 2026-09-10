@@ -1,17 +1,13 @@
 /**
  * CanvasNetCreatorMEMBERSHIP (CNCM) - Drive Storage & Explorer Addon
- * 親フォルダ1本貼り付け・動的サブフォルダスクリーニング対応版
+ * GAS側親フォルダ固定 ＆ サブフォルダ動的スクリーニング連動版
  */
 
 // ================= 設定領域 =================
-// 1. 独立Drive専用GASのデプロイURL
-const DRIVE_GAS_API_URL = "https://script.google.com/macros/s/AKfycbxaUhIyNVlOO33z8B1GH35esvVmne9VJrqtg-uXfZjzmSfnskBa5_khm1GzTFzod0GlWA/exec";
+// 独立Drive専用GASのデプロイURL（ウェブアプリURL）をここに貼るだけ！
+const DRIVE_GAS_API_URL = "https://script.google.com/macros/s/AKfycbzrhCMwSbRE6Qv1NZ2mRcTqxHf0LwriqIAaqcHeRvnraHTgj0ObCeta2qimMWH8lu63bA/exec";
 
-// 2. 親フォルダ「Cnvas Net Creates MEMBERSHIP」の共有リンクを1本貼るだけ！
-// ※親フォルダの共有設定を「リンクを知っている全員が閲覧可」にしてください
-const PARENT_DRIVE_FOLDER_URL = "https://drive.google.com/drive/folders/1rlDLvI3d31tmdxAtf3EfNx2XO1557ZfD";
-
-// サブフォルダ名と表示タイトルのマッピング（名前が存在すれば自動適用されます）
+// サブフォルダ名とUI表示タイトルのマッピング
 const SUB_FOLDER_DISPLAY_TITLES = {
   "SE_BGM": "🎵 効果音・BGM素材",
   "VideoFootage": "🎬 動画テクスチャ・オーバーレイ",
@@ -118,9 +114,9 @@ function launchDriveExplorer(targetSubName) {
   loading.innerText = "Google Driveの親フォルダ配下をスクリーニング中...";
   modal.style.display = "flex";
 
-  // 1. まず親フォルダ配下のサブフォルダ一覧を取得（未キャッシュ時）
+  // 親フォルダ直下のサブフォルダ一覧を取得（未キャッシュ時）
   if (cachedSubFolders.length === 0) {
-    fetch(`${DRIVE_GAS_API_URL}?action=getSubFolders&parentUrl=${encodeURIComponent(PARENT_DRIVE_FOLDER_URL)}`)
+    fetch(`${DRIVE_GAS_API_URL}?action=getSubFolders`)
       .then(res => res.json())
       .then(res => {
         if (res.status === "success" && res.folders) {
@@ -133,7 +129,7 @@ function launchDriveExplorer(targetSubName) {
     renderSubFolderTabs();
   }
 
-  // 2. 指定されたサブフォルダ内のファイル一覧を取得
+  // 指定サブフォルダ内のファイル一覧を取得
   loadSubFolderFiles(activeSubFolderName);
 }
 
@@ -164,9 +160,9 @@ function loadSubFolderFiles(subName) {
 
   container.innerHTML = "";
   loading.style.display = "block";
-  loading.innerText = `フォルダ「${subName}」のファイルをスキャン中...`;
+  loading.innerText = `フォルダ「${subName}」をスキャン中...`;
 
-  fetch(`${DRIVE_GAS_API_URL}?action=getFilesBySubFolderName&parentUrl=${encodeURIComponent(PARENT_DRIVE_FOLDER_URL)}&subFolderName=${encodeURIComponent(subName)}`)
+  fetch(`${DRIVE_GAS_API_URL}?action=getFilesBySubFolder&subFolderName=${encodeURIComponent(subName)}`)
     .then(res => res.json())
     .then(response => {
       loading.style.display = "none";
@@ -181,7 +177,7 @@ function loadSubFolderFiles(subName) {
     })
     .catch(err => {
       loading.style.display = "block";
-      loading.innerText = "Driveスクリーニング通信に失敗しました。親フォルダURLとGAS設定をご確認ください。";
+      loading.innerText = "Driveスクリーニング通信に失敗しました。GASのPARENT_FOLDER_URLと共有設定をご確認ください。";
     });
 }
 
@@ -311,7 +307,7 @@ function executeDriveUpload() {
   const reader = new FileReader();
   reader.onload = function(e) {
     progressBar.style.width = '60%';
-    statusLabel.innerText = `親フォルダ配下の「${currentUploadSubFolder}」へ安全中継アップロード中...`;
+    statusLabel.innerText = `フォルダ「${currentUploadSubFolder}」へ安全中継アップロード中...`;
 
     const base64Data = e.target.result.split(',')[1];
     
@@ -320,7 +316,6 @@ function executeDriveUpload() {
       headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
       body: JSON.stringify({
         action: 'uploadFile',
-        parentUrl: PARENT_DRIVE_FOLDER_URL,
         subFolderName: currentUploadSubFolder,
         fileName: fileToUpload.name,
         mimeType: fileToUpload.type,
