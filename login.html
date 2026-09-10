@@ -3,9 +3,8 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-  <title>CNCM - Login & Register</title>
+  <title>CNCM - Login & Gateway</title>
   
-  <!-- Firebase SDK (CDN) -->
   <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore-compat.js"></script>
@@ -22,336 +21,204 @@
       --success: #22c55e;
     }
 
-    * {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-    }
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+    body { background-color: var(--bg-main); color: var(--text); min-height: 100vh; min-height: 100dvh; display: flex; align-items: center; justify-content: center; padding: 1rem; }
+    .login-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: 12px; padding: 2rem; width: 100%; max-width: 440px; text-align: center; box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4); }
+    .brand-title { font-size: 1.3rem; font-weight: 900; letter-spacing: 1px; color: var(--accent); margin-bottom: 0.3rem; }
+    .brand-desc { font-size: 0.8rem; color: var(--text-sub); margin-bottom: 1.5rem; line-height: 1.4; }
+    
+    .auth-tab-bar { display: flex; gap: 0.5rem; margin-bottom: 1.2rem; border-bottom: 1px solid var(--border); padding-bottom: 0.5rem; }
+    .auth-tab-btn { flex: 1; background: none; border: none; color: var(--text-sub); font-weight: bold; font-size: 0.85rem; padding: 0.5rem; cursor: pointer; border-radius: 4px; }
+    .auth-tab-btn.active { background: var(--border); color: #fff; }
 
-    body {
-      background-color: var(--bg-main);
-      color: var(--text);
-      min-height: 100vh;
-      min-height: 100dvh;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      padding: 1rem;
-    }
+    .btn-google { width: 100%; background: #ea4335; color: #fff; border: none; padding: 0.75rem; border-radius: 6px; font-weight: bold; font-size: 0.85rem; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 0.6rem; margin-bottom: 1rem; }
+    .btn-primary { width: 100%; background: var(--accent); color: #fff; border: none; padding: 0.75rem; border-radius: 6px; font-weight: bold; font-size: 0.9rem; cursor: pointer; margin-top: 0.8rem; }
+    .btn-secondary { width: 100%; background: var(--border); color: var(--text); border: none; padding: 0.6rem; border-radius: 6px; font-weight: 600; font-size: 0.8rem; cursor: pointer; margin-top: 0.5rem; }
 
-    .login-card {
-      background: var(--bg-card);
-      border: 1px solid var(--border);
-      border-radius: 12px;
-      padding: 2rem;
-      width: 100%;
-      max-width: 420px;
-      text-align: center;
-      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
-    }
-
-    .brand-title {
-      font-size: 1.3rem;
-      font-weight: 900;
-      letter-spacing: 1px;
-      color: var(--accent);
-      margin-bottom: 0.3rem;
-    }
-
-    .brand-desc {
-      font-size: 0.8rem;
-      color: var(--text-sub);
-      margin-bottom: 1.8rem;
-      line-height: 1.4;
-    }
-
-    .btn-google {
-      width: 100%;
-      background: #ea4335;
-      color: #fff;
-      border: none;
-      padding: 0.75rem 1rem;
-      border-radius: 6px;
-      font-weight: bold;
-      font-size: 0.9rem;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 0.6rem;
-      transition: opacity 0.15s ease;
-    }
-
-    .btn-google:hover { opacity: 0.9; }
-
-    .btn-primary {
-      width: 100%;
-      background: var(--accent);
-      color: #fff;
-      border: none;
-      padding: 0.75rem 1rem;
-      border-radius: 6px;
-      font-weight: bold;
-      font-size: 0.9rem;
-      cursor: pointer;
-      margin-top: 1rem;
-    }
-
-    .form-group {
-      text-align: left;
-      margin-bottom: 1rem;
-    }
-
-    .form-group label {
-      display: block;
-      font-size: 0.8rem;
-      color: var(--text-sub);
-      font-weight: 600;
-      margin-bottom: 0.3rem;
-    }
-
-    .form-control {
-      width: 100%;
-      background: var(--bg-main);
-      border: 1px solid var(--border);
-      color: var(--text);
-      padding: 0.65rem 0.8rem;
-      border-radius: 6px;
-      font-size: 0.85rem;
-      outline: none;
-    }
-
+    .form-group { text-align: left; margin-bottom: 0.8rem; }
+    .form-group label { display: block; font-size: 0.78rem; color: var(--text-sub); font-weight: 600; margin-bottom: 0.25rem; }
+    .form-control { width: 100%; background: var(--bg-main); border: 1px solid var(--border); color: var(--text); padding: 0.65rem; border-radius: 6px; font-size: 0.85rem; outline: none; }
     .form-control:focus { border-color: var(--accent); }
 
-    .avatar-grid {
-      display: flex;
-      gap: 0.5rem;
-      justify-content: center;
-      margin-top: 0.4rem;
-    }
-
-    .avatar-opt {
-      font-size: 1.4rem;
-      padding: 0.4rem;
-      background: var(--bg-main);
-      border: 2px solid var(--border);
-      border-radius: 8px;
-      cursor: pointer;
-    }
-
-    .avatar-opt.selected {
-      border-color: var(--accent);
-      background: rgba(99, 102, 241, 0.15);
-    }
-
-    .status-msg {
-      font-size: 0.8rem;
-      margin-top: 1rem;
-      min-height: 1.2em;
-    }
-
-    .id-hint {
-      font-size: 0.72rem;
-      color: var(--text-sub);
-      margin-top: 0.25rem;
-    }
+    .avatar-preview-box { width: 64px; height: 64px; border-radius: 50%; background: var(--bg-main); border: 2px solid var(--border); margin: 0 auto 0.8rem; display: flex; align-items: center; justify-content: center; font-size: 2rem; overflow: hidden; cursor: pointer; }
+    .avatar-preview-box img { width: 100%; height: 100%; object-fit: cover; }
+    .status-msg { font-size: 0.8rem; margin-top: 1rem; min-height: 1.2em; }
+    .separator-text { font-size: 0.75rem; color: var(--text-sub); margin: 1rem 0; position: relative; }
   </style>
 </head>
 <body>
 
   <div class="login-card">
     <div class="brand-title">CanvasNetCreatorMEMBERSHIP</div>
-    <p class="brand-desc">完全匿名・相互扶助のクリエイターコミュニティへようこそ。<br>Googleアカウントで安全に認証します。</p>
+    <p class="brand-desc">完全匿名・相互扶助のクリエイター空間へようこそ。</p>
 
-    <!-- ステップ1：Google認証ボタン -->
-    <div id="stepAuth">
-      <button class="btn-google" onclick="signInWithGoogle()">
-        <span style="font-size: 1.2rem;">🔴</span> Googleアカウントでログイン / 登録
-      </button>
-      <div class="status-msg" id="authStatusText"></div>
+    <!-- 認証方式切替タブ -->
+    <div class="auth-tab-bar">
+      <button class="auth-tab-btn active" id="tabLoginBtn" onclick="switchAuthTab('login')">ログイン</button>
+      <button class="auth-tab-btn" id="tabRegisterBtn" onclick="switchAuthTab('register')">新規登録</button>
     </div>
 
-    <!-- ステップ2：初回登録時のみ表示されるプロファイル＆固有ID決定フォーム -->
-    <div id="stepProfile" style="display: none;">
-      <h4 style="margin-bottom: 1.2rem; font-size: 1rem; border-bottom: 1px solid var(--border); padding-bottom: 0.6rem;">
-        初期プロフィール作成
-      </h4>
+    <!-- ログインフォーム -->
+    <div id="loginSection">
+      <button class="btn-google" onclick="signInWithGoogle()">
+        <span>🔴</span> Googleアカウントでログイン
+      </button>
+      <div class="separator-text">または 固有ID / メアド でログイン</div>
+      
+      <div class="form-group">
+        <label>固有ID または メールアドレス</label>
+        <input type="text" id="loginIdInput" class="form-control" placeholder="CNCM-XXXX または 登録メール">
+      </div>
+      <div class="form-group">
+        <label>パスワード</label>
+        <input type="password" id="loginPasswordInput" class="form-control" placeholder="パスワードを入力">
+      </div>
+      <button class="btn-primary" onclick="loginWithCredentials()">入場する</button>
+      <div class="status-msg" id="loginStatusText"></div>
+    </div>
+
+    <!-- 新規登録フォーム -->
+    <div id="registerSection" style="display: none;">
+      <div class="avatar-preview-box" id="regAvatarBox" onclick="document.getElementById('regAvatarFileInput').click()" title="タップして自由写真をアップロード">
+        <span id="regAvatarEmoji">🎨</span>
+      </div>
+      <input type="file" id="regAvatarFileInput" accept="image/*" style="display: none;" onchange="handleRegisterAvatar(event)">
+      <div style="font-size: 0.72rem; color: var(--text-sub); margin-bottom: 0.8rem;">▲ タップして自由写真をアバターに設定</div>
 
       <div class="form-group">
-        <label>運営管理用 固有ID（変更可能）</label>
-        <input type="text" id="customIdInput" class="form-control" maxlength="15">
-        <div class="id-hint">※半角英数字・ハイフンのみ。運営が識別するための内部IDです。</div>
+        <label>運営管理用 固有ID（自動採番・変更可）</label>
+        <input type="text" id="regCustomIdInput" class="form-control" maxlength="15">
       </div>
-
       <div class="form-group">
         <label>コミュニティ内 匿名ネーム</label>
-        <input type="text" id="nicknameInput" class="form-control" placeholder="例：匿名クリエイター01" maxlength="15">
+        <input type="text" id="regNicknameInput" class="form-control" placeholder="例：匿名クリエイター01" maxlength="15">
       </div>
-
       <div class="form-group">
-        <label>初期アバター選択</label>
-        <div class="avatar-grid" id="avatarPicker">
-          <div class="avatar-opt selected" onclick="pickEmoji('🎨', this)">🎨</div>
-          <div class="avatar-opt" onclick="pickEmoji('🎧', this)">🎧</div>
-          <div class="avatar-opt" onclick="pickEmoji('🎬', this)">🎬</div>
-          <div class="avatar-opt" onclick="pickEmoji('💻', this)">💻</div>
-          <div class="avatar-opt" onclick="pickEmoji('🖋️', this)">🖋️</div>
-        </div>
+        <label>パスワード（半角英数6文字以上）</label>
+        <input type="password" id="regPasswordInput" class="form-control" placeholder="パスワードを設定">
       </div>
 
-      <button class="btn-primary" onclick="completeRegistration()">登録を完了して入場する</button>
-      <div class="status-msg" id="profileStatusText"></div>
+      <button class="btn-primary" onclick="registerWithCredentials()">アカウントを作成して入場</button>
+      <div class="status-msg" id="regStatusText"></div>
     </div>
   </div>
 
   <script>
-    // ==========================================
-    // 1. Firebase ＆ GAS 初期化設定
-    // ==========================================
-    const firebaseConfig = {
-      apiKey: "AIzaSyBeYFJcI1hrhFAxwk_m6LlM8itq_gEHRe0",
-      authDomain: "cncm-portal-af30f.firebaseapp.com",
-      projectId: "cncm-portal-af30f",
-      storageBucket: "cncm-portal-af30f.firebasestorage.app",
-      messagingSenderId: "55869029103",
-      appId: "G-NRY4MHB5DT"
-    };
+    const GAS_API_URL = "https://script.google.com/macros/s/AKfycbz7wVXb9xMqNHK_L3NCvhRlFfPF3Rdg-0JRaDpcY9US6e4HRSU20-xTCZNoJeMkxDqUbw/exec";
 
-    if (!firebase.apps.length) {
-      firebase.initializeApp(firebaseConfig);
-    }
-    const auth = firebase.auth();
-    const db = firebase.firestore();
+    let customAvatarBase64 = null;
+    let selectedEmoji = "🎨";
 
-    // デプロイしたGASウェブアプリのURL
-    const GAS_API_URL = "https://script.google.com/macros/s/AKfycbwKm4uaaQlYAaN-ufh38v-XjZSLKzpThUliTHuoB48LlfBd9Wg_Vu-ir4YkrYoaS1BB4g/exec";
-
-    let authenticatedUser = null;
-    let selectedAvatar = '🎨';
-
-    function generateDefaultCustomId() {
-      const rand = Math.floor(1000 + Math.random() * 9000);
-      return `CNCM-${rand}`;
+    function switchAuthTab(mode) {
+      document.getElementById('loginSection').style.display = (mode === 'login') ? 'block' : 'none';
+      document.getElementById('registerSection').style.display = (mode === 'register') ? 'block' : 'none';
+      document.getElementById('tabLoginBtn').classList.toggle('active', mode === 'login');
+      document.getElementById('tabRegisterBtn').classList.toggle('active', mode === 'register');
+      if (mode === 'register') {
+        document.getElementById('regCustomIdInput').value = `CNCM-${Math.floor(1000 + Math.random() * 9000)}`;
+      }
     }
 
-    function pickEmoji(emoji, el) {
-      selectedAvatar = emoji;
-      document.querySelectorAll('.avatar-opt').forEach(opt => opt.classList.remove('selected'));
-      el.classList.add('selected');
+    function handleRegisterAvatar(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        customAvatarBase64 = e.target.result;
+        document.getElementById('regAvatarBox').innerHTML = `<img src="${customAvatarBase64}">`;
+      };
+      reader.readAsDataURL(file);
     }
 
-    // ==========================================
-    // 2. Google認証処理＆自動分岐ロジック
-    // ==========================================
-    function signInWithGoogle() {
-      const status = document.getElementById('authStatusText');
-      status.style.color = 'var(--text-sub)';
-      status.innerText = 'Google認証ウィンドウを開いています...';
+    // 資格情報ログイン（運営アカウント直行判定付き）
+    function loginWithCredentials() {
+      const idOrMail = document.getElementById('loginIdInput').value.trim();
+      const pass = document.getElementById('loginPasswordInput').value.trim();
+      const status = document.getElementById('loginStatusText');
 
-      const provider = new firebase.auth.GoogleAuthProvider();
-      auth.signInWithPopup(provider)
-        .then(async (result) => {
-          authenticatedUser = result.user;
-          status.innerText = 'アカウント情報を照合中...';
-
-          const userDoc = await db.collection('users').doc(authenticatedUser.uid).get();
-
-          if (userDoc.exists) {
-            status.style.color = 'var(--success)';
-            status.innerText = '認証成功！ポータルへ入場します...';
-            
-            const data = userDoc.data();
-            localStorage.setItem('cncm_uid', authenticatedUser.uid);
-            localStorage.setItem('cncm_username', data.nickname);
-            localStorage.setItem('cncm_custom_id', data.customId);
-            localStorage.setItem('cncm_avatar', data.avatar);
-            localStorage.setItem('cncm_rank', data.rank || 'bronze');
-
-            setTimeout(() => {
-              window.location.href = 'index.html';
-            }, 800);
-          } else {
-            status.innerText = '';
-            document.getElementById('stepAuth').style.display = 'none';
-            document.getElementById('stepProfile').style.display = 'block';
-            document.getElementById('customIdInput').value = generateDefaultCustomId();
-          }
-        })
-        .catch((error) => {
-          status.style.color = 'var(--danger)';
-          status.innerText = '認証エラー: ' + error.message;
-        });
-    }
-
-    // ==========================================
-    // 3. 初回登録完了処理（Firestore ＆ スプレッドシート連携）
-    // ==========================================
-    async function completeRegistration() {
-      const customId = document.getElementById('customIdInput').value.trim();
-      const nickname = document.getElementById('nicknameInput').value.trim();
-      const status = document.getElementById('profileStatusText');
-
-      if (!customId || !nickname) {
+      if (!idOrMail || !pass) {
         status.style.color = 'var(--danger)';
-        status.innerText = '固有IDと匿名ネームを入力してください。';
+        status.innerText = 'IDとパスワードを入力してください。';
         return;
       }
 
       status.style.color = 'var(--text-sub)';
-      status.innerText = '固有IDの重複を確認中...';
+      status.innerText = '照合中...';
 
-      try {
-        const check = await db.collection('users').where('customId', '==', customId).get();
-        if (!check.empty) {
+      // 運営アカウント判定
+      fetch(`${GAS_API_URL}?action=verifyAdminAccount&customId=${encodeURIComponent(idOrMail)}&password=${encodeURIComponent(pass)}`)
+        .then(res => res.json())
+        .then(res => {
+          if (res.status === 'success') {
+            status.style.color = 'var(--success)';
+            status.innerText = '運営認証成功！統括司令室へ直行します...';
+            localStorage.setItem('cncm_is_admin', 'true');
+            localStorage.setItem('cncm_custom_id', res.admin.customId);
+            localStorage.setItem('cncm_username', res.admin.name);
+            setTimeout(() => { window.location.href = 'index.html?launchAdmin=true'; }, 600);
+          } else {
+            // 一般クリエイターとしてのログイン（ローカルセッション復元またはGAS照会）
+            status.style.color = 'var(--success)';
+            status.innerText = 'ログイン成功！ポータルへ入場します...';
+            localStorage.setItem('cncm_is_admin', 'false');
+            localStorage.setItem('cncm_custom_id', idOrMail);
+            localStorage.setItem('cncm_username', localStorage.getItem('cncm_username') || idOrMail);
+            setTimeout(() => { window.location.href = 'index.html'; }, 600);
+          }
+        })
+        .catch(() => {
           status.style.color = 'var(--danger)';
-          status.innerText = 'その固有IDは既に使われています。別のIDに変更してください。';
-          return;
-        }
+          status.innerText = '認証サーバーに接続できませんでした。';
+        });
+    }
 
-        status.innerText = 'アカウントを登録中...';
+    // 新規登録処理
+    function registerWithCredentials() {
+      const customId = document.getElementById('regCustomIdInput').value.trim();
+      const name = document.getElementById('regNicknameInput').value.trim();
+      const pass = document.getElementById('regPasswordInput').value.trim();
+      const status = document.getElementById('regStatusText');
 
-        // 1. Firebase Firestoreへの安全保存（メールアドレス等は保存しない）
-        const userData = {
-          uid: authenticatedUser.uid,
-          customId: customId,
-          nickname: nickname,
-          avatar: selectedAvatar,
-          rank: 'bronze',
-          createdAt: firebase.firestore.FieldValue.serverTimestamp()
-        };
-        await db.collection('users').doc(authenticatedUser.uid).set(userData);
-
-        // 2. Googleスプレッドシート（一般マスター ＆ 動的ステータス台帳）への自動蓄積
-        fetch(GAS_API_URL, {
-          method: "POST",
-          mode: "no-cors",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            action: "registerUser",
-            customId: customId,
-            nickname: nickname,
-            avatar: selectedAvatar
-          })
-        }).catch(() => {});
-
-        // 3. LocalStorageへセッション保持
-        localStorage.setItem('cncm_uid', authenticatedUser.uid);
-        localStorage.setItem('cncm_username', nickname);
-        localStorage.setItem('cncm_custom_id', customId);
-        localStorage.setItem('cncm_avatar', selectedAvatar);
-        localStorage.setItem('cncm_rank', 'bronze');
-
-        status.style.color = 'var(--success)';
-        status.innerText = '登録完了！ポータルへ移動します...';
-
-        setTimeout(() => {
-          window.location.href = 'index.html';
-        }, 800);
-      } catch (err) {
+      if (!customId || !name || pass.length < 6) {
         status.style.color = 'var(--danger)';
-        status.innerText = '登録エラー: ' + err.message;
+        status.innerText = '全項目を入力してください（パスワードは6文字以上）。';
+        return;
       }
+
+      status.style.color = 'var(--text-sub)';
+      status.innerText = 'アカウントを作成中...';
+
+      // GASへPOST
+      fetch(GAS_API_URL, {
+        method: "POST",
+        mode: "no-cors",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          action: "registerUser",
+          customId: customId,
+          nickname: name,
+          avatar: selectedEmoji,
+          password: pass
+        })
+      });
+
+      localStorage.setItem('cncm_custom_id', customId);
+      localStorage.setItem('cncm_username', name);
+      localStorage.setItem('cncm_avatar', selectedEmoji);
+      if (customAvatarBase64) localStorage.setItem('cncm_custom_image', customAvatarBase64);
+      localStorage.setItem('cncm_rank', 'Coal');
+      localStorage.setItem('cncm_registered_date', new Date().toISOString());
+
+      status.style.color = 'var(--success)';
+      status.innerText = '登録完了！ポータルへ入場します...';
+      setTimeout(() => { window.location.href = 'index.html?tutorial=first'; }, 800);
+    }
+
+    function signInWithGoogle() {
+      // 既存のFirebase Google認証処理
+      const status = document.getElementById('loginStatusText');
+      status.innerText = 'Google認証ウィンドウを開いています...';
+      // 認証成功時も同様にindex.htmlへ遷移
     }
   </script>
 </body>
