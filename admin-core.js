@@ -1,6 +1,6 @@
 /**
  * CanvasNetCreatorMEMBERSHIP (CNCM) - Admin Command Center Engine
- * 完全修復版：adminキー入力裏コマンド ＆ パスコード認証 ＆ 全25管理機能
+ * 運営アカウント発行機能 ＆ admin裏コマンド ＆ 全25管理機能統合版
  */
 
 (function initAdminCommandCenter() {
@@ -9,23 +9,19 @@
 
   // ================= 1. admin キー入力監視リスナー =================
   window.addEventListener('keydown', (e) => {
-    // 文字入力欄（input, textarea）に入力中の場合は誤作動を防ぐため無視
     const activeTag = document.activeElement ? document.activeElement.tagName : '';
     if (['INPUT', 'TEXTAREA', 'SELECT'].includes(activeTag)) return;
 
     keyBuffer += e.key.toLowerCase();
-    if (keyBuffer.length > 5) {
-      keyBuffer = keyBuffer.slice(-5);
-    }
+    if (keyBuffer.length > 5) keyBuffer = keyBuffer.slice(-5);
 
-    // 「admin」と完全一致した瞬間にパスコード認証モーダルを起動！
     if (keyBuffer === 'admin') {
       keyBuffer = '';
       openAdminAuthDialog();
     }
   });
 
-  // ================= 2. パスコード入力モーダルの自動生成 ＆ 認証 =================
+  // ================= 2. パスコード入力モーダル =================
   function openAdminAuthDialog() {
     let authModal = document.getElementById('adminSecretAuthModal');
     if (!authModal) {
@@ -46,7 +42,6 @@
       document.body.insertAdjacentHTML('beforeend', modalHtml);
       authModal = document.getElementById('adminSecretAuthModal');
 
-      // Enterキーで即時認証
       document.getElementById('adminSecretInputBox').addEventListener('keydown', (evt) => {
         if (evt.key === 'Enter') verifyAdminSecretPass();
       });
@@ -67,7 +62,6 @@
     const input = document.getElementById('adminSecretInputBox');
     const pass = input ? input.value.trim() : '';
 
-    // パスコード照合
     if (pass === 'canvas2026') {
       closeAdminAuthDialog();
       window.launchAdminCommandCenter();
@@ -77,7 +71,7 @@
     }
   };
 
-  // ================= 3. 統括司令室UIの動的構築 ＆ 画面起動 =================
+  // ================= 3. 統括司令室UIの動的構築 =================
   window.addEventListener('DOMContentLoaded', () => {
     const adminRoot = document.getElementById('adminDashboardRoot');
     if (!adminRoot) return;
@@ -90,6 +84,7 @@
         </div>
         <nav style="flex:1; display:flex; flex-direction:column; gap:0.2rem; padding:0.5rem 0;">
           <button class="admin-menu-btn active" onclick="switchAdminSubView('admin-view-users', this)">👥 カード型ユーザー台帳</button>
+          <button class="admin-menu-btn" onclick="switchAdminSubView('admin-view-staff', this)">👑 運営陣・アカウント発行</button>
           <button class="admin-menu-btn" onclick="switchAdminSubView('admin-view-topics', this)">🎯 公式お題マネージャー</button>
           <button class="admin-menu-btn" onclick="switchAdminSubView('admin-view-metrics', this)">📊 リアルタイム分析 (A)</button>
           <button class="admin-menu-btn" onclick="switchAdminSubView('admin-view-ngwords', this)">🚫 NGワード辞書 (B)</button>
@@ -112,6 +107,54 @@
           </div>
           <div class="admin-cards-grid" id="adminUserCardsGrid">
             <div class="empty-state-notice">ユーザーマスターを照会中...</div>
+          </div>
+        </section>
+
+        <!-- ★新設：運営アカウント発行・管理ビュー -->
+        <section id="admin-view-staff" class="admin-sub-view" style="display:none;">
+          <h2>👑 運営アカウント新規発行 ＆ 権限統括</h2>
+          <p class="sub-text" style="margin-bottom:1rem;">新しい運営スタッフのアカウントを発行します。発行されたIDとパスワードで直接管理画面へ直行ログインできるようになります。</p>
+
+          <div class="card" style="border: 1px solid var(--accent);">
+            <div class="card-header"><h3>＋ 新規運営スタッフ登録</h3></div>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.8rem;">
+              <div class="form-group">
+                <label>運営用 固有ID（例：ADMIN-MOD01）</label>
+                <input type="text" id="newAdminIdInput" class="form-control" placeholder="ADMIN-XXXX">
+              </div>
+              <div class="form-group">
+                <label>運営表示ネーム（例：モデレーターA）</label>
+                <input type="text" id="newAdminNameInput" class="form-control" placeholder="表示ネーム">
+              </div>
+              <div class="form-group">
+                <label>役職ロール</label>
+                <select id="newAdminRoleSelect" class="form-control">
+                  <option value="モデレーター">モデレーター（巡回・チャット監視）</option>
+                  <option value="イベントマネージャー">イベントマネージャー（企画・お題統括）</option>
+                  <option value="システムマネージャー">システムマネージャー（技術・監査担当）</option>
+                  <option value="副代表・共同創設者">副代表・共同創設者（最高統括）</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label>付与権限レベル</label>
+                <select id="newAdminLevelSelect" class="form-control">
+                  <option value="Lv.1">Lv.1: 巡回・通報ログ確認</option>
+                  <option value="Lv.2">Lv.2: お題起案・ユーザー警告権限</option>
+                  <option value="Lv.3">Lv.3: 最高権限（BAN・バックアップ・全権限）</option>
+                </select>
+              </div>
+              <div class="form-group" style="grid-column: 1/-1;">
+                <label>ログインパスワード（半角英数6文字以上）</label>
+                <input type="password" id="newAdminPasswordInput" class="form-control" placeholder="運営用パスワードを設定">
+              </div>
+              <div class="form-group" style="grid-column: 1/-1;">
+                <label>担当分野・業務備考メモ</label>
+                <input type="text" id="newAdminNoteInput" class="form-control" placeholder="例：デザイン相談のモデレーション担当">
+              </div>
+            </div>
+            <button class="btn btn-primary" style="margin-top:0.8rem; width:100%;" onclick="submitRegisterAdminAccount()">
+              👑 運営アカウントを発行してスプレッドシートへ登録
+            </button>
           </div>
         </section>
 
@@ -161,6 +204,44 @@
     const userView = document.getElementById('userAppContainer');
     if (adminRoot) adminRoot.style.display = 'none';
     if (userView) userView.style.display = 'flex';
+  };
+
+  // ================= 4. 運営アカウント発行の通信処理 =================
+  window.submitRegisterAdminAccount = function() {
+    const adminId = document.getElementById('newAdminIdInput').value.trim();
+    const adminName = document.getElementById('newAdminNameInput').value.trim();
+    const adminRole = document.getElementById('newAdminRoleSelect').value;
+    const adminLevel = document.getElementById('newAdminLevelSelect').value;
+    const password = document.getElementById('newAdminPasswordInput').value.trim();
+    const adminNote = document.getElementById('newAdminNoteInput').value.trim();
+
+    if (!adminId || !adminName || password.length < 6) {
+      alert('運営ID、名前、および6文字以上のパスワードを正しく入力してください。');
+      return;
+    }
+
+    if (!adminId.startsWith('ADMIN-') && !adminId.startsWith('CNCM-ADMIN')) {
+      alert('運営IDは識別のため「ADMIN-」から始まる文字列にしてください（例：ADMIN-MOD01）。');
+      return;
+    }
+
+    postAdminAction({
+      action: "registerAdminAccount",
+      adminId: adminId,
+      adminName: adminName,
+      adminRole: adminRole,
+      adminLevel: adminLevel,
+      password: password,
+      adminNote: adminNote
+    });
+
+    alert(`運営アカウント【${adminName} (${adminId})】を発行・登録しました！\n相手にIDとパスワードを共有してください。`);
+    
+    // フォームクリア
+    document.getElementById('newAdminIdInput').value = '';
+    document.getElementById('newAdminNameInput').value = '';
+    document.getElementById('newAdminPasswordInput').value = '';
+    document.getElementById('newAdminNoteInput').value = '';
   };
 
   function fetchAdminAllUsers() {
